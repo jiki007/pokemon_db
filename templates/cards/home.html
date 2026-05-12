@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="container">
+    <div class="hero-content" style="max-width:640px;">
+      <div class="hero-eyebrow">✦ The Complete TCG Reference</div>
+      <h1 class="hero-title">The <em>Pokémon</em><br>Card Database</h1>
+      <p class="hero-subtitle">Browse {{ total_cards|intcomma }} cards across {{ total_sets }} sets. Search by type, rarity, price and more.</p>
+      <div class="hero-actions">
+        <a href="{% url 'cards:card_list' %}" class="btn btn-primary btn-lg">Browse Cards →</a>
+        <a href="{% url 'cards:set_list' %}"  class="btn btn-secondary btn-lg">Explore Sets</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-value">{{ total_cards|intcomma }}</div>
+      <div class="stat-label">Total Cards</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">{{ total_sets }}</div>
+      <div class="stat-label">Card Sets</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">{{ types|length }}</div>
+      <div class="stat-label">Energy Types</div>
+    </div>
+    {% if top_price %}
+    <div class="stat-item">
+      <div class="stat-value">${{ top_price.tcg_market }}</div>
+      <div class="stat-label">Highest Price</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if types %}
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px;">
+    {% for t in types %}
+    <a href="{% url 'cards:card_list' %}?type={{ t.name }}"
+       style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;padding:7px 16px;border-radius:999px;font-size:16px;font-weight:600;transition:0.2s;">
+      {{ t.icon }} {{ t.name }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if featured %}
+  <div class="section-head">
+    <h2 class="section-title">Recently Added</h2>
+    <a href="{% url 'cards:card_list' %}" class="section-link">View all →</a>
+  </div>
+  <div class="card-grid" style="margin-bottom:60px;">
+    {% for card in featured %}
+    <a href="{{ card.get_absolute_url }}" class="pokemon-card" style="display:block;">
+      <div class="card-image">
+        {% if card.image_small %}
+        <img src="{{ card.image_small }}" alt="{{ card.name }}" loading="lazy">
+        {% else %}
+        <div class="card-image-placeholder">🎴</div>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="card-types">
+          {% for t in card.types.all %}
+          <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;">{{ t.icon }} {{ t.name }}</span>
+          {% endfor %}
+        </div>
+        <div class="card-name">{{ card.name }}</div>
+        <div class="card-meta">
+          <span class="card-hp">{% if card.hp %}<strong>{{ card.hp }}</strong> HP{% endif %}</span>
+          {% if card.market_price %}<span class="card-price">${{ card.market_price }}</span>{% endif %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if recent_sets %}
+  <div class="section-head">
+    <h2 class="section-title">Recent Sets</h2>
+    <a href="{% url 'cards:set_list' %}" class="section-link">All sets →</a>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:60px;">
+    {% for s in recent_sets %}
+    <a href="{{ s.get_absolute_url }}" class="set-card" style="display:block;">
+      {% if s.logo_url %}
+      <img src="{{ s.logo_url }}" alt="{{ s.name }}" class="set-logo">
+      {% else %}
+      <div style="font-size:32px;margin-bottom:14px;">🃏</div>
+      {% endif %}
+      <div class="set-name">{{ s.name }}</div>
+      <div class="set-series">{{ s.series }}</div>
+      <div class="set-count">{{ s.total }} cards{% if s.release_date %} · {{ s.release_date.year }}{% endif %}</div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

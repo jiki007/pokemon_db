@@ -1,0 +1,18 @@
+from django.urls import path
+from . import views
+
+app_name = 'cards'
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('cards/', views.card_list, name='card_list'),
+    path('cards/<str:card_id>/', views.card_detail, name='card_detail'),
+    path('sets/', views.set_list, name='set_list'),
+    path('sets/<str:set_id>/', views.set_detail, name='set_detail'),
+    path('search/', views.search, name='search'),
+    path('dashboard/', views.search, name='dashboard'),
+    path('cards/new/',views.cards_create, name='card_create'),
+    path('cards/<str:card_id>/edit', views.card_edit, name='card_edit'),
+    path('cards/<str:card_id>/delete/', views.card_delete, name='card_delete'),
+    
+]

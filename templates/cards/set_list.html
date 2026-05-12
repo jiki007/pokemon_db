@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Sets{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Card Sets</h1>
+    <p class="page-meta">{{ page_obj.paginator.count }} sets</p>
+  </div>
+
+  <div class="search-form-wrap">
+    <form method="get">
+      <div class="search-main">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search sets…" class="search-input">
+        <select name="series">
+          <option value="">All Series</option>
+          {% for s in series_list %}
+          <option value="{{ s }}" {% if request.GET.series == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if request.GET %}<a href="{% url 'cards:set_list' %}" class="btn btn-secondary">Clear</a>{% endif %}
+      </div>
+    </form>
+  </div>
+
+  {% if page_obj %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;">
+    {% for s in page_obj %}
+    <a href="{{ s.get_absolute_url }}" class="set-card" style="display:block;">
+      {% if s.logo_url %}
+      <img src="{{ s.logo_url }}" alt="{{ s.name }}" class="set-logo">
+      {% else %}
+      <div style="font-size:32px;margin-bottom:14px;">🃏</div>
+      {% endif %}
+      <div class="set-name">{{ s.name }}</div>
+      <div class="set-series">{{ s.series }}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+        <div class="set-count">{{ s.card_count }} cards</div>
+        {% if s.release_date %}<div style="font-size:11px;color:var(--text-muted);">{{ s.release_date.year }}</div>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">←</a>
+    {% endif %}
+    <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="page-btn">→</a>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div style="text-align:center;padding:80px 0;">
+    <div style="font-size:48px;margin-bottom:16px;">🃏</div>
+    <p style="color:var(--text-muted);">No sets found.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

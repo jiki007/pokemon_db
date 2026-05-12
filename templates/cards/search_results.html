@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Search: {{ q }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">{% if q %}Results for "{{ q }}"{% else %}Search{% endif %}</h1>
+  </div>
+
+  <div class="search-form-wrap">
+    <form method="get" action="{% url 'cards:search' %}">
+      <div class="search-main">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search cards, sets…" class="search-input" autofocus>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </div>
+    </form>
+  </div>
+
+  {% if q %}
+    {% if cards %}
+    <div class="section-head">
+      <h2 class="section-title">Cards <span style="color:var(--text-muted);font-size:16px;">({{ cards|length }})</span></h2>
+      <a href="{% url 'cards:card_list' %}?q={{ q }}" class="section-link">Full results →</a>
+    </div>
+    <div class="card-grid" style="margin-bottom:48px;">
+      {% for card in cards %}
+      <a href="{{ card.get_absolute_url }}" class="pokemon-card" style="display:block;">
+        <div class="card-image">
+          {% if card.image_small %}
+          <img src="{{ card.image_small }}" alt="{{ card.name }}" loading="lazy">
+          {% else %}
+          <div class="card-image-placeholder">🎴</div>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <div class="card-types">
+            {% for t in card.types.all %}
+            <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;font-size:11px;">{{ t.name }}</span>
+            {% endfor %}
+          </div>
+          <div class="card-name">{{ card.name }}</div>
+          <div class="card-meta">
+            <span class="card-hp">{% if card.hp %}<strong>{{ card.hp }}</strong> HP{% endif %}</span>
+            {% if card.market_price %}<span class="card-price">${{ card.market_price }}</span>{% endif %}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if sets %}
+    <div class="section-head">
+      <h2 class="section-title">Sets <span style="color:var(--text-muted);font-size:16px;">({{ sets|length }})</span></h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:48px;">
+      {% for s in sets %}
+      <a href="{{ s.get_absolute_url }}" class="set-card" style="display:block;">
+        {% if s.logo_url %}
+        <img src="{{ s.logo_url }}" alt="{{ s.name }}" class="set-logo">
+        {% else %}
+        <div style="font-size:32px;margin-bottom:14px;">🃏</div>
+        {% endif %}
+        <div class="set-name">{{ s.name }}</div>
+        <div class="set-series">{{ s.series }}</div>
+        <div class="set-count">{{ s.total }} cards</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not cards and not sets %}
+    <div style="text-align:center;padding:80px 0;">
+      <div style="font-size:48px;margin-bottom:16px;">🔍</div>
+      <h3 style="font-size:20px;margin-bottom:8px;">No results for "{{ q }}"</h3>
+      <p style="color:var(--text-muted);">Try a different search term.</p>
+    </div>
+    {% endif %}
+
+  {% else %}
+  <div style="text-align:center;padding:80px 0;">
+    <div style="font-size:48px;margin-bottom:16px;">🔍</div>
+    <h3 style="font-size:20px;margin-bottom:8px;">Enter a search term above</h3>
+    <p style="color:var(--text-muted);">Search for cards, sets, artists and more.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

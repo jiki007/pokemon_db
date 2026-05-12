@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% block title %}{{ card.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Breadcrumbs -->
+  <div style="padding:28px 0 0;">
+    <div class="breadcrumbs" style="font-size:16px;">
+      <a href="{% url 'cards:home' %}">Home</a>
+      <span>›</span>
+      <a href="{% url 'cards:card_list' %}">Cards</a>
+      {% if card.card_set %}
+      <span>›</span>
+      <a href="{{ card.card_set.get_absolute_url }}">{{ card.card_set.name }}</a>
+      {% endif %}
+      <span>›</span>
+      <span>{{ card.name }}</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:420px 1fr;gap:56px;align-items:start;margin-top:36px;">
+
+    <!-- Left: image -->
+    <div style="position:sticky;top:88px;">
+      <div style="border-radius:24px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.6);transition:0.3s;">
+        {% if card.image_large %}
+        <img src="{{ card.image_large }}" alt="{{ card.name }}" style="width:100%;display:block;">
+        {% elif card.image_small %}
+        <img src="{{ card.image_small }}" alt="{{ card.name }}" style="width:100%;display:block;">
+        {% else %}
+        <div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);font-size:100px;">🎴</div>
+        {% endif %}
+      </div>
+
+      <!-- Type badges -->
+      {% if card.types.all %}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;justify-content:center;">
+        {% for t in card.types.all %}
+        <a href="{% url 'cards:card_list' %}?type={{ t.name }}"
+           style="background:{{ t.color }}25;color:{{ t.color }};border:1.5px solid {{ t.color }}50;padding:10px 22px;border-radius:999px;font-size:16px;font-weight:600;transition:0.2s;display:inline-flex;align-items:center;gap:6px;">
+          {{ t.icon }} {{ t.name }}
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right: details -->
+    <div>
+
+      <!-- Title block -->
+      {% if card.rarity %}
+      <span style="display:inline-flex;padding:6px 16px;border-radius:999px;font-size:14px;font-weight:700;background:rgba(255,203,5,0.12);color:var(--accent);border:1.5px solid rgba(255,203,5,0.3);margin-bottom:14px;">{{ card.rarity }}</span>
+      {% endif %}
+
+      <h1 style="font-family:var(--font-display);font-size:clamp(36px,5vw,56px);font-weight:700;line-height:1.1;margin-bottom:16px;">{{ card.name }}</h1>
+
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;font-size:17px;margin-bottom:32px;">
+        {% if card.hp %}
+        <span style="display:flex;align-items:center;gap:6px;">❤️ <strong style="color:#EF4444;font-size:20px;">{{ card.hp }}</strong> <span style="color:var(--text-muted);">HP</span></span>
+        {% endif %}
+        {% if card.supertype %}
+        <span style="color:var(--text-muted);">{{ card.supertype }}</span>
+        {% endif %}
+        {% if card.card_set %}
+        <a href="{{ card.card_set.get_absolute_url }}" style="color:var(--accent);font-weight:600;">{{ card.card_set.name }}</a>
+        {% endif %}
+      </div>
+
+      <!-- Market Prices -->
+     {% with price=card.price %}
+{% if price %}
+<div style="background:var(--bg-card);border:1px solid rgba(204,0,0,0.2);border-radius:20px;padding:28px;margin-bottom:20px;">
+  <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);">💰 Market Prices</div>
+  {% if price.tcg_market %}
+  <div style="text-align:center;background:linear-gradient(135deg,rgba(204,0,0,0.07),rgba(204,0,0,0.03));border:1.5px solid rgba(204,0,0,0.2);border-radius:14px;padding:20px;margin-bottom:16px;">
+    <div style="font-size:14px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Market Price</div>
+    <div style="font-family:var(--font-display);font-size:48px;font-weight:700;color:var(--accent);">${{ price.tcg_market }}</div>
+  </div>
+  {% endif %}
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+    {% if price.tcg_low %}
+    <div style="background:var(--bg-elevated);border-radius:12px;padding:16px;text-align:center;">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">Low</div>
+      <div style="font-size:22px;font-weight:700;color:var(--accent);">${{ price.tcg_low }}</div>
+    </div>
+    {% endif %}
+    {% if price.tcg_mid %}
+    <div style="background:var(--bg-elevated);border-radius:12px;padding:16px;text-align:center;">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">Mid</div>
+      <div style="font-size:22px;font-weight:700;color:var(--accent);">${{ price.tcg_mid }}</div>
+    </div>
+    {% endif %}
+    {% if price.tcg_high %}
+    <div style="background:var(--bg-elevated);border-radius:12px;padding:16px;text-align:center;">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">High</div>
+      <div style="font-size:22px;font-weight:700;color:var(--accent);">${{ price.tcg_high }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endwith %}
+
+      <!-- Card Info -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);">📋 Card Information</div>
+        {% if card.card_set %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:16px;color:var(--text-muted);">Set</span>
+          <a href="{{ card.card_set.get_absolute_url }}" style="color:var(--accent);font-size:17px;font-weight:600;">{{ card.card_set.name }}</a>
+        </div>
+        {% endif %}
+        {% if card.card_number %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:16px;color:var(--text-muted);">Number</span>
+          <span style="font-size:17px;font-weight:600;">{{ card.card_number }}</span>
+        </div>
+        {% endif %}
+        {% if card.artist %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:16px;color:var(--text-muted);">Artist</span>
+          <span style="font-size:17px;font-weight:600;">{{ card.artist }}</span>
+        </div>
+        {% endif %}
+        {% if card.evolves_from %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:16px;color:var(--text-muted);">Evolves From</span>
+          <span style="font-size:17px;font-weight:600;">{{ card.evolves_from }}</span>
+        </div>
+        {% endif %}
+        {% if card.weaknesses.all %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:16px;color:var(--text-muted);">Weakness</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+            {% for w in card.weaknesses.all %}
+            <span style="background:{{ w.type.color }}20;color:{{ w.type.color }};border:1.5px solid {{ w.type.color }}40;padding:6px 14px;border-radius:999px;font-size:15px;font-weight:600;">{{ w.type.icon }} {{ w.type.name }} {{ w.value }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% if card.resistances.all %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;">
+          <span style="font-size:16px;color:var(--text-muted);">Resistance</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+            {% for r in card.resistances.all %}
+            <span style="background:{{ r.type.color }}20;color:{{ r.type.color }};border:1.5px solid {{ r.type.color }}40;padding:6px 14px;border-radius:999px;font-size:15px;font-weight:600;">{{ r.type.icon }} {{ r.type.name }} {{ r.value }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Flavor text -->
+      {% if card.flavor_text %}
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);">📖 Flavor Text</div>
+        <p style="font-style:italic;color:var(--text-secondary);font-size:17px;line-height:1.8;">{{ card.flavor_text }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Attacks -->
+      {% if card.attacks.all %}
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);">⚔️ Attacks</div>
+        {% for atk in card.attacks.all %}
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-size:20px;font-weight:700;">{{ atk.name }}</div>
+            {% if atk.damage %}
+            <div style="font-family:var(--font-display);font-size:28px;color:var(--accent);font-weight:700;">{{ atk.damage }}</div>
+            {% endif %}
+          </div>
+          {% if atk.description %}
+          <div style="font-size:16px;color:var(--text-secondary);line-height:1.7;">{{ atk.description }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- Related cards -->
+  {% if related %}
+  <div style="margin-top:72px;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:28px;">
+      <h2 style="font-family:var(--font-display);font-size:28px;font-weight:600;">Related Cards</h2>
+    </div>
+    <div class="card-grid">
+      {% for rc in related %}
+      <a href="{{ rc.get_absolute_url }}" class="pokemon-card" style="display:block;">
+        <div class="card-image">
+          {% if rc.image_small %}
+          <img src="{{ rc.image_small }}" alt="{{ rc.name }}" loading="lazy">
+          {% else %}
+          <div class="card-image-placeholder">🎴</div>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <div class="card-types">
+            {% for t in rc.types.all %}
+            <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;">{{ t.name }}</span>
+            {% endfor %}
+          </div>
+          <div class="card-name">{{ rc.name }}</div>
+          <div class="card-meta">
+            <span class="card-hp">{% if rc.hp %}<strong>{{ rc.hp }}</strong> HP{% endif %}</span>
+            {% if rc.market_price %}<span class="card-price">${{ rc.market_price }}</span>{% endif %}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Responsive fix -->
+<style>
+@media(max-width:900px){
+  div[style*="grid-template-columns:420px"] {
+    display: block !important;
+  }
+  div[style*="position:sticky"] {
+    position: static !important;
+    margin-bottom: 32px;
+  }
+}
+</style>
+
+{% endblock %}
