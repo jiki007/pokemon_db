@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}SQL Showcase{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">SQL Showcase</h1>
+    <p class="page-meta">Live database queries demonstrating joins, aggregations, grouping, filtering, and null checks</p>
+  </div>
+
+  <!-- Query 1: JOIN -->
+  <div class="info-section" style="margin-bottom:24px;">
+    <div class="info-section-title">① JOIN — Top HP Cards with Set & Type</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+      Multi-table join across <code>Card</code> → <code>Cardset</code> → <code>CardType</code> → <code>Type</code>, ordered by HP descending.
+    </p>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);">
+            <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">Card</th>
+            <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">Set</th>
+            <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">Types</th>
+            <th style="text-align:right;padding:8px 12px;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">HP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for card in join_example %}
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 12px;font-weight:600;">
+              <a href="{{ card.get_absolute_url }}" style="color:var(--accent);">{{ card.name }}</a>
+            </td>
+            <td style="padding:10px 12px;color:var(--text-secondary);">{{ card.card_set.name|default:"—" }}</td>
+            <td style="padding:10px 12px;">
+              {% for t in card.types.all %}
+              <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;font-size:11px;">{{ t.name }}</span>
+              {% endfor %}
+            </td>
+            <td style="padding:10px 12px;text-align:right;font-family:var(--font-display);font-weight:700;color:var(--accent);">{{ card.hp }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
+
+    <!-- Query 2: AVG HP by Type -->
+    <div class="info-section">
+      <div class="info-section-title">② GROUP BY + AVG — Average HP per Type</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Aggregates HP across the <code>CardType</code> join table, grouped by type.</p>
+      {% for t in avg_hp_by_type %}
+      <div class="info-row">
+        <span style="color:{{ t.color }};font-weight:600;">{{ t.icon }} {{ t.name }}</span>
+        <span style="font-family:var(--font-display);font-weight:700;color:var(--accent);">{{ t.avg_hp|floatformat:1 }} HP</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Query 3: COUNT by Rarity -->
+    <div class="info-section">
+      <div class="info-section-title">③ GROUP BY + COUNT — Cards per Rarity</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Groups all cards by rarity field, counts rows per group.</p>
+      {% for r in count_by_rarity %}
+      <div class="info-row">
+        <span style="color:var(--text-secondary);">{{ r.rarity }}</span>
+        <span style="font-family:var(--font-display);font-weight:700;">{{ r.total }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
+
+    <!-- Query 4: AVG price by rarity -->
+    <div class="info-section">
+      <div class="info-section-title">④ JOIN + GROUP BY + AVG — Avg Price per Rarity</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Joins <code>Price</code> → <code>Card</code>, groups by rarity, averages market price.</p>
+      {% for r in avg_price_by_rarity %}
+      <div class="info-row">
+        <span style="color:var(--text-secondary);">{{ r.card__rarity }}</span>
+        <span style="font-family:var(--font-display);font-weight:700;color:var(--accent);">${{ r.avg_price|floatformat:2 }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Query 5: Top artists -->
+    <div class="info-section">
+      <div class="info-section-title">⑤ GROUP BY + ORDER — Top Artists by Card Count</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Groups cards by artist name, counts and ranks descending.</p>
+      {% for a in top_artists %}
+      <div class="info-row">
+        <span style="color:var(--text-secondary);">{{ a.artist }}</span>
+        <span style="font-family:var(--font-display);font-weight:700;">{{ a.card_count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <!-- Query 6: Heaviest attacks -->
+  <div class="info-section" style="margin-bottom:24px;">
+    <div class="info-section-title">⑥ FILTER + ORDER + LIMIT — Highest Energy Cost Attacks</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">
+      Filters attacks where <code>converted_cost &gt; 0</code>, joins to card, orders by cost descending, limits to 8.
+    </p>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);">
+            <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">Attack</th>
+            <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">Card</th>
+            <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">Damage</th>
+            <th style="text-align:right;padding:8px 12px;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">Energy Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for atk in heaviest_attacks %}
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 12px;font-weight:600;">{{ atk.name }}</td>
+            <td style="padding:10px 12px;">
+              <a href="{{ atk.card.get_absolute_url }}" style="color:var(--accent);">{{ atk.card.name }}</a>
+            </td>
+            <td style="padding:10px 12px;color:var(--text-secondary);">{{ atk.damage|default:"—" }}</td>
+            <td style="padding:10px 12px;text-align:right;font-family:var(--font-display);font-weight:700;color:var(--accent-2);">{{ atk.converted_cost }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px;">
+
+    <!-- Query 7: NULL check / completeness -->
+    <div class="info-section">
+      <div class="info-section-title">⑦ NULL CHECK — Data Completeness</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Counts non-null values per field to measure data quality across {{ completeness.total }} cards.</p>
+      {% with t=completeness.total %}
+      <div class="info-row">
+        <span style="color:var(--text-secondary);">Has HP</span>
+        <span><strong>{{ completeness.has_hp }}</strong> <span style="color:var(--text-muted);font-size:12px;">({% widthratio completeness.has_hp t 100 %}%)</span></span>
+      </div>
+      <div class="info-row">
+        <span style="color:var(--text-secondary);">Has Rarity</span>
+        <span><strong>{{ completeness.has_rarity }}</strong> <span style="color:var(--text-muted);font-size:12px;">({% widthratio completeness.has_rarity t 100 %}%)</span></span>
+      </div>
+      <div class="info-row">
+        <span style="color:var(--text-secondary);">Has Price</span>
+        <span><strong>{{ completeness.has_price }}</strong> <span style="color:var(--text-muted);font-size:12px;">({% widthratio completeness.has_price t 100 %}%)</span></span>
+      </div>
+      <div class="info-row" style="border-bottom:none;">
+        <span style="color:var(--text-secondary);">Has Image</span>
+        <span><strong>{{ completeness.has_image }}</strong> <span style="color:var(--text-muted);font-size:12px;">({% widthratio completeness.has_image t 100 %}%)</span></span>
+      </div>
+      {% endwith %}
+    </div>
+
+    <!-- Query 8: Type battle stats -->
+    <div class="info-section">
+      <div class="info-section-title">⑧ MULTI-JOIN + COUNT — Type Battle Statistics</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Joins <code>Type</code> → <code>Weakness</code> and <code>Resistance</code> simultaneously, counts each.</p>
+      {% for t in type_battle_stats %}
+      <div class="info-row">
+        <span style="color:{{ t.color }};font-weight:600;">{{ t.icon }} {{ t.name }}</span>
+        <span style="font-size:13px;color:var(--text-muted);">
+          <span title="weak against">⬇ {{ t.as_weakness }}</span>
+          &nbsp;
+          <span title="resists">⬆ {{ t.as_resistance }}</span>
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

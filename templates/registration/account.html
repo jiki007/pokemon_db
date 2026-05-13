@@ -2,35 +2,40 @@
 {% block title %}My Account{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:760px;">
-  <div class="page-header">
-    <h1 class="page-title">My Account</h1>
-    <p class="page-meta">Manage your user details.</p>
-  </div>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="account-avatar">
+      {{ request.user.username|first|upper }}
+    </div>
+    <div class="account-username">{{ request.user.username }}</div>
+    <div class="account-email">{{ request.user.email|default:'No email set' }}</div>
 
-  <div class="info-section">
-    <div class="info-row">
-      <strong>Username</strong>
-      <span>{{ request.user.username }}</span>
-    </div>
-    <div class="info-row">
-      <strong>Email</strong>
-      <span>{{ request.user.email|default:'-' }}</span>
-    </div>
-    <div class="info-row">
-      <strong>First name</strong>
-      <span>{{ request.user.first_name|default:'-' }}</span>
-    </div>
-    <div class="info-row">
-      <strong>Last name</strong>
-      <span>{{ request.user.last_name|default:'-' }}</span>
+    <div class="auth-divider"></div>
+
+    <div class="info-section" style="margin-bottom:0;">
+      {% if request.user.first_name or request.user.last_name %}
+      <div class="info-row">
+        <span class="info-label">Full name</span>
+        <span class="info-value">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+      </div>
+      {% endif %}
+      <div class="info-row">
+        <span class="info-label">Member since</span>
+        <span class="info-value">{{ request.user.date_joined|date:"M Y" }}</span>
+      </div>
+      <div class="info-row" style="border-bottom:none;">
+        <span class="info-label">Last login</span>
+        <span class="info-value">{{ request.user.last_login|date:"M d, Y" }}</span>
+      </div>
     </div>
 
-    <div class="form-actions" style="margin-top:18px;display:flex;gap:10px;">
-      <a class="btn" href="{% url 'password_change' %}">Change password</a>
+    <div class="auth-divider"></div>
+
+    <div class="account-actions">
+      <a class="btn btn-secondary" href="{% url 'password_change' %}">Change password</a>
       <form method="post" action="{% url 'logout' %}">
         {% csrf_token %}
-        <button class="btn btn-primary" type="submit">Logout</button>
+        <button class="btn btn-danger" type="submit">Log out</button>
       </form>
     </div>
   </div>

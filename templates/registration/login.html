@@ -2,35 +2,36 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:680px;">
-  <div class="page-header">
-    <h1 class="page-title">Login</h1>
-    <p class="page-meta">Access your account.</p>
-  </div>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">⚡ PokémonDB</div>
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-subtitle">Sign in to your account</p>
 
-  <div class="info-section">
+    {% if form.non_field_errors %}
+      <div class="auth-error-banner">{{ form.non_field_errors|striptags }}</div>
+    {% endif %}
+
     <form method="post">
       {% csrf_token %}
-      {% if form.non_field_errors %}
-        <p class="page-meta" style="color:#ef4444;">{{ form.non_field_errors|striptags }}</p>
-      {% endif %}
-
       <div class="form-row">
         <label class="form-label" for="id_username">Username</label>
-        <input class="form-input" type="text" name="username" id="id_username" required value="{{ form.username.value|default:'' }}">
+        <input class="form-input" type="text" name="username" id="id_username"
+               required autocomplete="username"
+               value="{{ form.username.value|default:'' }}">
       </div>
-
       <div class="form-row">
         <label class="form-label" for="id_password">Password</label>
-        <input class="form-input" type="password" name="password" id="id_password" required>
+        <input class="form-input" type="password" name="password" id="id_password"
+               required autocomplete="current-password">
       </div>
-
-      <div class="form-actions" style="margin-top:16px;">
+      <div class="form-actions">
         <button class="btn btn-primary" type="submit">Sign in</button>
       </div>
     </form>
 
-    <p class="page-meta" style="margin-top:16px;">No account? <a href="{% url 'cards:signup' %}">Create one</a></p>
+    <div class="auth-divider"></div>
+    <p class="auth-footer">No account? <a href="{% url 'cards:signup' %}">Create one</a></p>
   </div>
 </div>
 {% endblock %}

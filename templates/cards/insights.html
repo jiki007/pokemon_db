@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Collection Insights{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Collection Insights</h1>
+    <p class="page-meta">Aggregated analytics across the entire card database</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
+
+    <!-- Avg HP per type -->
+    <div class="info-section">
+      <div class="info-section-title">❤️ Average HP per Type</div>
+      {% for t in hp_by_type %}
+      <div class="info-row">
+        <span style="color:{{ t.color }};font-weight:600;">{{ t.icon }} {{ t.name }}</span>
+        <span style="font-family:var(--font-display);font-weight:700;color:var(--accent);">{{ t.avg_hp|floatformat:1 }} HP</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Avg price per rarity -->
+    <div class="info-section">
+      <div class="info-section-title">💰 Average Market Price per Rarity</div>
+      {% for r in price_by_rarity %}
+      <div class="info-row">
+        <span style="color:var(--text-secondary);">{{ r.card__rarity }}</span>
+        <div style="display:flex;gap:16px;align-items:center;">
+          <span style="font-size:12px;color:var(--text-muted);">{{ r.total }} cards</span>
+          <span style="font-family:var(--font-display);font-weight:700;color:var(--accent);">${{ r.avg_price|floatformat:2 }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
+
+    <!-- Type distribution -->
+    <div class="info-section">
+      <div class="info-section-title">🎴 Cards per Type</div>
+      {% for t in type_distribution %}
+      <div class="info-row">
+        <span style="color:{{ t.color }};font-weight:600;">{{ t.icon }} {{ t.name }}</span>
+        <span style="font-family:var(--font-display);font-weight:700;">{{ t.card_count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- HP distribution -->
+    <div class="info-section">
+      <div class="info-section-title">📊 HP Distribution</div>
+      {% for range, count in hp_buckets.items %}
+      <div class="info-row">
+        <span style="color:var(--text-secondary);">{{ range }} HP</span>
+        <span style="font-family:var(--font-display);font-weight:700;">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px;">
+
+    <!-- Top artists -->
+    <div class="info-section">
+      <div class="info-section-title">🎨 Top 15 Artists by Card Count</div>
+      {% for a in top_artists %}
+      <div class="info-row">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <span style="font-size:12px;color:var(--text-muted);width:18px;">{{ forloop.counter }}</span>
+          <span style="color:var(--text-secondary);">{{ a.artist }}</span>
+        </div>
+        <span style="font-family:var(--font-display);font-weight:700;">{{ a.card_count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Richest sets -->
+    <div class="info-section">
+      <div class="info-section-title">🏆 Top 10 Sets by Avg Card Value</div>
+      {% for s in richest_sets %}
+      <div class="info-row">
+        <div style="display:flex;gap:12px;align-items:center;">
+          <span style="font-size:12px;color:var(--text-muted);width:18px;">{{ forloop.counter }}</span>
+          <span style="color:var(--text-secondary);font-size:13px;">{{ s.card__card_set__name }}</span>
+        </div>
+        <span style="font-family:var(--font-display);font-weight:700;color:var(--accent);">${{ s.avg_price|floatformat:2 }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

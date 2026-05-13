@@ -1,11 +1,15 @@
 {% extends 'base.html' %}
 {% block title %}Logged Out{% endblock %}
+
 {% block content %}
-<div class="container" style="max-width:680px;">
-  <div class="page-header"><h1 class="page-title">Logged Out</h1></div>
-  <div class="info-section">
-    <p class="page-meta">You have been logged out.</p>
-    <a class="btn btn-primary" href="{% url 'login' %}">Login again</a>
+<div class="auth-wrap">
+  <div class="auth-card" style="text-align:center;">
+    <div style="font-size:48px; margin-bottom:16px;">👋</div>
+    <h1 class="auth-title">You've been logged out</h1>
+    <p class="auth-subtitle">See you next time, Trainer!</p>
+    <div class="auth-divider"></div>
+    <a class="btn btn-primary" href="{% url 'login' %}" style="width:100%;justify-content:center;">Sign back in</a>
+    <p class="auth-footer" style="margin-top:16px;"><a href="{% url 'cards:home' %}">← Back to home</a></p>
   </div>
 </div>
 {% endblock %}

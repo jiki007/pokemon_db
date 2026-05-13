@@ -2,13 +2,12 @@
 {% block title %}Create Account{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:680px;">
-  <div class="page-header">
-    <h1 class="page-title">Create Account</h1>
-    <p class="page-meta">Register your own user profile.</p>
-  </div>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">⚡ PokémonDB</div>
+    <h1 class="auth-title">Create account</h1>
+    <p class="auth-subtitle">Join the Pokémon database</p>
 
-  <div class="info-section">
     <form method="post">
       {% csrf_token %}
       {% for field in form %}
@@ -16,19 +15,20 @@
         <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}
         {% if field.help_text %}
-        <p class="page-meta" style="font-size:12px;">{{ field.help_text|safe }}</p>
+          <p class="form-help">{{ field.help_text|safe }}</p>
         {% endif %}
         {% if field.errors %}
-        <p class="page-meta" style="color:#ef4444;">{{ field.errors|striptags }}</p>
+          <p class="form-error">{{ field.errors|striptags }}</p>
         {% endif %}
       </div>
       {% endfor %}
-      <div class="form-actions" style="margin-top:16px;">
+      <div class="form-actions">
         <button class="btn btn-primary" type="submit">Create account</button>
       </div>
     </form>
 
-    <p class="page-meta" style="margin-top:16px;">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+    <div class="auth-divider"></div>
+    <p class="auth-footer">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
   </div>
 </div>
 {% endblock %}

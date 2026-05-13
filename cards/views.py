@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Avg, Count, Max
 from django.core.paginator import Paginator
 
-from .models import Card, Cardset, Type, Price
+from .models import Card, Cardset, Type, Price,Attack
 from .forms import SignUpForm
 
 
@@ -217,15 +217,25 @@ def dashboard(request):
         .order_by('-tcg_market')[:10]
     )
 
+    # Data quality counts
+    missing_hp      = Card.objects.filter(hp__isnull=True).count()
+    missing_rarity  = Card.objects.filter(rarity='').count()
+    missing_price   = Card.objects.filter(price__isnull=True).count()
+    empty_sets      = Cardset.objects.annotate(cnt=Count('cards')).filter(cnt=0).count()
+
     return render(request, 'cards/dashboard.html', {
-        'total_cards': total_cards,
-        'total_sets':  total_sets,
-        'avg_hp':      round(avg_hp, 1) if avg_hp else 0,
-        'top_price':   top_price,
-        'rare_cards':  rare_cards,
-        'by_type':     by_type,
-        'by_rarity':   by_rarity,
-        'expensive':   expensive,
+        'total_cards':total_cards,
+        'total_sets':total_sets,
+        'avg_hp':round(avg_hp, 1) if avg_hp else 0,
+        'top_price':top_price,
+        'rare_cards':rare_cards,
+        'by_type':by_type,
+        'by_rarity':by_rarity,
+        'expensive':expensive,
+        'missing_hp':missing_hp,
+        'missing_rarity':missing_rarity,
+        'missing_price': missing_price,
+        'empty_sets':empty_sets,
     })
 
 def card_create(request):
@@ -280,7 +290,7 @@ def card_edit(request, card_id):
     if request.method == 'POST':
         card.name = request.POST.get('name', card.name)
         card.supertype = request.POST.get('supertype', card.supertype)
-        card.rarity = request.POST.get('rarirty', card.rarity)
+        card.rarity = request.POST.get('rarity', card.rarity)
         card.card_number = request.POST.get('card_number', card.card_number)
         card.artist = request.POST.get('artist', card.artist)
         card.flavor_text = request.POST.get('flavor_text', card.flavor_text)
@@ -308,11 +318,84 @@ def card_delete(request, card_id):
         return redirect('cards:card_list')
     return render(request, 'cards/card_confirm_delete.html', {'card': card})
 
-def handler404(request, exception):
-    return render(request, 'errors/404.html', status=404)
+def sql_showcase(request):
+    from django.db.models import Avg, Count, Max, Min, Sum
 
-def handler500(request):
-    return render(request, 'errors/500.html', status=500)
+    # 1. JOIN — Cards with their set and type (multi-table join)
+    join_example = (
+        Card.objects.select_related('card_set')
+        .prefetch_related('types')
+        .filter(hp__isnull=False)
+        .order_by('-hp')[:8]
+    )
+
+    # 2. GROUP BY + AVG — Average HP per type
+    avg_hp_by_type = (
+        Type.objects.annotate(avg_hp=Avg('cards__hp'))
+        .filter(avg_hp__isnull=False)
+        .order_by('-avg_hp')
+    )
+
+    # 3. GROUP BY + COUNT — Card count per rarity
+    count_by_rarity = (
+        Card.objects.values('rarity')
+        .annotate(total=Count('id'))
+        .exclude(rarity='')
+        .order_by('-total')
+    )
+
+    # 4. GROUP BY + AVG price — Average market price per rarity
+    avg_price_by_rarity = (
+        Price.objects.values('card__rarity')
+        .annotate(avg_price=Avg('tcg_market'))
+        .filter(avg_price__isnull=False)
+        .exclude(card__rarity='')
+        .order_by('-avg_price')
+    )
+
+    # 5. AGGREGATE — Top artists by number of cards
+    top_artists = (
+        Card.objects.exclude(artist='')
+        .values('artist')
+        .annotate(card_count=Count('id'))
+        .order_by('-card_count')[:10]
+    )
+
+    # 6. FILTER + ORDER + LIMIT — Highest attack converted cost
+    heaviest_attacks = (
+        Attack.objects.select_related('card')
+        .filter(converted_cost__gt=0)
+        .order_by('-converted_cost')[:8]
+    )
+
+    # 7. NULL CHECK — Data completeness summary
+    completeness = {
+        'total':           Card.objects.count(),
+        'has_hp':          Card.objects.filter(hp__isnull=False).count(),
+        'has_rarity':      Card.objects.exclude(rarity='').count(),
+        'has_price':       Price.objects.count(),
+        'has_image':       Card.objects.exclude(image_small='').count(),
+    }
+
+    # 8. MULTI-JOIN — Types with weakness/resistance stats
+    type_battle_stats = (
+        Type.objects.annotate(
+            as_weakness=Count('weakness'),
+            as_resistance=Count('resistance'),
+            card_count=Count('cards'),
+        ).order_by('-card_count')
+    )
+
+    return render(request, 'cards/sql_showcase.html', {
+        'join_example':        join_example,
+        'avg_hp_by_type':      avg_hp_by_type,
+        'count_by_rarity':     count_by_rarity,
+        'avg_price_by_rarity': avg_price_by_rarity,
+        'top_artists':         top_artists,
+        'heaviest_attacks':    heaviest_attacks,
+        'completeness':        completeness,
+        'type_battle_stats':   type_battle_stats,
+    })
 
 def signup(request):
     if request.user.is_authenticated:
@@ -329,7 +412,128 @@ def signup(request):
 
     return render(request, 'registration/signup.html', {'form': form})
 
+def set_compare(request):
+    from django.db.models import Avg, Count, Max, Min
+
+    sets = Cardset.objects.annotate(card_count=Count('cards')).order_by('name')
+
+    set_a = set_b = data_a = data_b = None
+
+    id_a = request.GET.get('a')
+    id_b = request.GET.get('b')
+
+    if id_a and id_b and id_a != id_b:
+        set_a = get_object_or_404(Cardset, set_id=id_a)
+        set_b = get_object_or_404(Cardset, set_id=id_b)
+
+        def get_set_data(s):
+            cards = Card.objects.filter(card_set=s)
+            return {
+                'set':       s,
+                'total':     cards.count(),
+                'avg_hp':    cards.filter(hp__isnull=False).aggregate(v=Avg('hp'))['v'],
+                'max_hp':    cards.aggregate(v=Max('hp'))['v'],
+                'by_rarity': (
+                    cards.values('rarity')
+                    .annotate(cnt=Count('id'))
+                    .exclude(rarity='')
+                    .order_by('-cnt')
+                ),
+                'top_cards': (
+                    Price.objects.filter(card__card_set=s, tcg_market__isnull=False)
+                    .select_related('card')
+                    .order_by('-tcg_market')[:5]
+                ),
+                'avg_price': (
+                    Price.objects.filter(card__card_set=s, tcg_market__isnull=False)
+                    .aggregate(v=Avg('tcg_market'))['v']
+                ),
+                'types': (
+                    Type.objects.filter(cards__card_set=s)
+                    .annotate(cnt=Count('cards'))
+                    .order_by('-cnt')[:5]
+                ),
+            }
+
+        data_a = get_set_data(set_a)
+        data_b = get_set_data(set_b)
+
+    return render(request, 'cards/set_compare.html', {
+        'sets':   sets,
+        'data_a': data_a,
+        'data_b': data_b,
+        'sel_a':  id_a or '',
+        'sel_b':  id_b or '',
+    })
+
+def insights(request):
+    from django.db.models import Avg, Max, Min, Sum
+
+    #Average HP per tpye
+    hp_by_type = (
+        Type.objects.annotate(avg_hp=Avg('cards__hp'))
+        .filter(avg_hp__isnull=False)
+        .order_by('-avg_hp')
+    )
+
+    #Average market price per rarity
+    price_by_rarity = (
+        Price.objects.values('card__rarity')
+        .annotate(avg_price=Avg('tcg_market'), total=Count('id'))
+        .exclude(card__rarity='')
+        .filter(avg_price__isnull=False)
+        .order_by('-avg_price')
+    )
+
+    #Top 15 artists by card count
+    top_artists = (
+        Card.objects.exclude(artist='')
+        .values('artist')
+        .annotate(card_count=Count('id'))
+        .order_by('-card_count'[:15])
+    )
+
+    #Most represented types overall
+    type_distribution = (
+        Type.objects.annotate(card_count=Count('cards'))
+        .filter(card_count__gt=0)
+        .order_by('-card_count')
+    )
+
+    #Sets with the highest average card value
+    richest_sets = (
+        Price.objects.values('card__card_set__name')
+        .annotate(avg_price=Avg('tcg_market'), card_count=Count('id'))
+        .filter(avg_price__isnull=False, card_count__gte=10)
+        .order_by('-avg_price')[:10]
+    )
+
+    #Hp distributuin buckets
+    hp_buckets = {
+        '1-50':Card.objects.filter(hp__gte=1, hp__lte=50).count(),
+        '51-100':Card.objects.filter(hp__gte=51, hp__lte=100).count(),
+        '101-150':Card.objects.filter(hp__gte=101, hp__lte=150).count(),
+        '151-200':Card.objects.filter(hp__gte=151, hp__lte=200).count(),
+        '200+':Card.objects.filter(hp__gte=201).count(),
+    }
+
+    return render(request, 'cards/insights.html', {
+        'hp_by_type':hp_by_type,
+        'price_by_rarity':price_by_rarity,
+        'top_artists':top_artists,
+        'type_distribution':type_distribution,
+        'richest_sets':richest_sets,
+        'hp_buckets':hp_buckets,
+    })
+
 
 @login_required
 def account(request):
     return render(request, 'registration/account.html')
+
+
+def handler404(request, exception):
+    return render(request, 'errors/404.html', status=404)
+
+def handler500(request):
+    return render(request, 'errors/500.html', status=500)
