@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}404 — Page Not Found{% endblock %}
+
+{% block content %}
+<div style="min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;">
+  <div>
+    <div style="font-size:120px;line-height:1;opacity:0.15;font-family:var(--font-display);font-weight:700;color:var(--accent);">404</div>
+    <div style="font-size:64px;margin:-20px 0 20px;">🔍</div>
+    <h1 style="font-family:var(--font-display);font-size:32px;font-weight:700;margin-bottom:12px;">Page Not Found</h1>
+    <p style="color:var(--text-secondary);font-size:17px;margin-bottom:32px;max-width:400px;margin-left:auto;margin-right:auto;">This card must have escaped! We couldn't find what you were looking for.</p>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <a href="{% url 'cards:home' %}" class="btn btn-primary btn-lg">Go Home</a>
+      <a href="{% url 'cards:card_list' %}" class="btn btn-secondary btn-lg">Browse Cards</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

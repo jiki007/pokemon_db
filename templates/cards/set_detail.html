@@ -34,52 +34,13 @@
     {% endif %}
   </div>
 
-  {% if page_obj %}
-  <div class="card-grid">
-    {% for card in page_obj %}
-    <a href="{{ card.get_absolute_url }}" class="pokemon-card" style="display:block;">
-      <div class="card-image">
-        {% if card.image_small %}
-        <img src="{{ card.image_small }}" alt="{{ card.name }}" loading="lazy">
-        {% else %}
-        <div class="card-image-placeholder">🎴</div>
-        {% endif %}
-      </div>
-      <div class="card-body">
-        <div class="card-types">
-          {% for t in card.types.all %}
-          <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;font-size:11px;">{{ t.name }}</span>
-          {% endfor %}
-        </div>
-        <div class="card-name">{{ card.name }}</div>
-        <div class="card-meta">
-          <span class="card-hp">{% if card.hp %}<strong>{{ card.hp }}</strong> HP{% endif %}</span>
-          {% if card.market_price %}<span class="card-price">${{ card.market_price }}</span>{% endif %}
-        </div>
-        {% if card.card_number %}
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">#{{ card.card_number }}</div>
-        {% endif %}
-      </div>
-    </a>
-    {% endfor %}
-  </div>
+{% include 'components/card_grid.html' with cards=page_obj %}
+{% include 'components/pagination.html' %}
 
-  <div class="pagination">
-    {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">←</a>
-    {% endif %}
-    <span class="page-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}" class="page-btn">→</a>
-    {% endif %}
-  </div>
-
-  {% else %}
   <div style="text-align:center;padding:80px 0;">
     <div style="font-size:48px;margin-bottom:16px;">🎴</div>
     <p style="color:var(--text-muted);">No cards in this set yet.</p>
   </div>
-  {% endif %}
 
 </div>
 {% endblock %}

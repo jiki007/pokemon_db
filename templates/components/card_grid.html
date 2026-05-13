@@ -1,0 +1,41 @@
+{% if cards %}
+<div class="card-grid">
+  {% for card in cards %}
+  <a href="{{ card.get_absolute_url }}" class="pokemon-card" style="display:block;">
+    <div class="card-image">
+      {% if card.image_small %}
+      <img src="{{ card.image_small }}" alt="{{ card.name }}" loading="lazy">
+      {% else %}
+      <div class="card-image-placeholder">🎴</div>
+      {% endif %}
+      {% if card.rarity %}
+      <div style="position:absolute;top:10px;right:10px;">
+        <span class="rarity-badge">{{ card.rarity }}</span>
+      </div>
+      {% endif %}
+    </div>
+    <div class="card-body">
+      <div class="card-types">
+        {% for t in card.types.all %}
+        <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;font-size:11px;">{{ t.icon }} {{ t.name }}</span>
+        {% endfor %}
+      </div>
+      <div class="card-name">{{ card.name }}</div>
+      <div class="card-meta">
+        <span class="card-hp">{% if card.hp %}<strong>{{ card.hp }}</strong> HP{% endif %}</span>
+        {% if card.market_price %}<span class="card-price">${{ card.market_price }}</span>{% endif %}
+      </div>
+      {% if card.card_set %}
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ card.card_set.name }}</div>
+      {% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div style="text-align:center;padding:80px 0;">
+  <div style="font-size:48px;margin-bottom:16px;">🎴</div>
+  <h3 style="font-size:20px;margin-bottom:8px;">No cards found</h3>
+  <p style="color:var(--text-muted);">Try adjusting your filters.</p>
+</div>
+{% endif %}
