@@ -145,3 +145,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 POKEMONTCG_API_KEY = os.getenv('POKEMONTCG_API_KEY', '')
 POKEMONTCG_API_URL = 'https://api.pokemontcg.io/v2'
+LOGIN_REDIRECT_URL = 'cards:home'
+LOGOUT_REDIRECT_URL = 'cards:home'
+LOGIN_URL = 'login'
