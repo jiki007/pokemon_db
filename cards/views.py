@@ -1,8 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Avg, Count, Max
 from django.core.paginator import Paginator
 
 from .models import Card, Cardset, Type, Price
+from .forms import SignUpForm
 
 
 def home(request):
@@ -310,3 +313,23 @@ def handler404(request, exception):
 
 def handler500(request):
     return render(request, 'errors/500.html', status=500)
+
+def signup(request):
+    if request.user.is_authenticated:
+        return redirect('cards:home')
+
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('cards:home')
+    else:
+        form = SignUpForm()
+
+    return render(request, 'registration/signup.html', {'form': form})
+
+
+@login_required
+def account(request):
+    return render(request, 'registration/account.html')

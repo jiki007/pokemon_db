@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:680px;">
+  <div class="page-header">
+    <h1 class="page-title">Login</h1>
+    <p class="page-meta">Access your account.</p>
+  </div>
+
+  <div class="info-section">
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <p class="page-meta" style="color:#ef4444;">{{ form.non_field_errors|striptags }}</p>
+      {% endif %}
+
+      <div class="form-row">
+        <label class="form-label" for="id_username">Username</label>
+        <input class="form-input" type="text" name="username" id="id_username" required value="{{ form.username.value|default:'' }}">
+      </div>
+
+      <div class="form-row">
+        <label class="form-label" for="id_password">Password</label>
+        <input class="form-input" type="password" name="password" id="id_password" required>
+      </div>
+
+      <div class="form-actions" style="margin-top:16px;">
+        <button class="btn btn-primary" type="submit">Sign in</button>
+      </div>
+    </form>
+
+    <p class="page-meta" style="margin-top:16px;">No account? <a href="{% url 'cards:signup' %}">Create one</a></p>
+  </div>
+</div>
+{% endblock %}
