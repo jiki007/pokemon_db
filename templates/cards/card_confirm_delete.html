@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Delete {{ card.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding:80px 0;">
+  <div style="max-width:480px;margin:0 auto;background:var(--bg-surface);border:1px solid var(--border);border-radius:24px;padding:48px;text-align:center;box-shadow:var(--shadow-card);">
+
+    <div style="font-size:56px;margin-bottom:20px;">⚠️</div>
+
+    <h1 style="font-family:var(--font-display);font-size:26px;font-weight:700;margin-bottom:12px;color:var(--text-primary);">Delete Card</h1>
+
+    <p style="color:var(--text-secondary);font-size:16px;margin-bottom:8px;">Are you sure you want to delete</p>
+
+    <p style="font-weight:700;font-size:20px;margin-bottom:8px;color:var(--text-primary);">{{ card.name }}</p>
+
+    {% if card.card_set %}
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:32px;">{{ card.card_set.name }}</p>
+    {% endif %}
+
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:32px;">This action cannot be undone.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <a href="{{ card.get_absolute_url }}" class="btn btn-secondary btn-lg">Cancel</a>
+        <button type="submit" style="background:rgba(204,0,0,0.1);color:var(--accent);border:1.5px solid rgba(204,0,0,0.3);padding:14px 32px;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:0.2s;">Yes, Delete</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}
