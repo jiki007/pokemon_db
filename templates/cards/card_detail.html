@@ -65,6 +65,18 @@
       style="background:rgba(204,0,0,0.08);color:var(--accent);border:1.5px solid rgba(204,0,0,0.2);padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:0.2s;">
       🗑 Delete
     </a>
+    {% if request.user.is_authenticated %}
+    <button
+      id="fav-btn"
+      data-card-id="{{ card.card_id }}"
+      style="background:{% if is_favourited %}rgba(204,0,0,0.12){% else %}var(--bg-elevated){% endif %};
+            color:{% if is_favourited %}var(--accent){% else %}var(--text-muted){% endif %};
+            border:1.5px solid {% if is_favourited %}rgba(204,0,0,0.3){% else %}var(--border){% endif %};
+            padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;
+            cursor:pointer;transition:0.2s;">
+      {% if is_favourited %}❤️ Unfavourite{% else %}🤍 Favourite{% endif %}
+    </button>
+    {% endif %}
     </div>
 
       <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;font-size:17px;margin-bottom:32px;">
@@ -243,4 +255,30 @@
 }
 </style>
 
+<script>
+const favBtn = document.getElementById('fav-btn');
+if (favBtn) {
+  favBtn.addEventListener('click', function() {
+    const cardId = this.dataset.cardId;
+    fetch(`/cards/${cardId}/favorite/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'added') {
+        this.textContent = '❤️ Unfavourite';
+        this.style.background = 'rgba(204,0,0,0.12)';
+        this.style.color = 'var(--accent)';
+        this.style.borderColor = 'rgba(204,0,0,0.3)';
+      } else {
+        this.textContent = '🤍 Favourite';
+        this.style.background = 'var(--bg-elevated)';
+        this.style.color = 'var(--text-muted)';
+        this.style.borderColor = 'var(--border)';
+      }
+    });
+  });
+}
+</script>
 {% endblock %}

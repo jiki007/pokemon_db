@@ -2,42 +2,132 @@
 {% block title %}My Account{% endblock %}
 
 {% block content %}
-<div class="auth-wrap">
-  <div class="auth-card">
-    <div class="account-avatar">
-      {{ request.user.username|first|upper }}
+<div class="container" style="padding-top:48px;padding-bottom:80px;">
+
+  <div style="display:grid;grid-template-columns:300px 1fr;gap:32px;align-items:start;">
+
+    <!-- LEFT: Profile card -->
+    <div style="position:sticky;top:88px;">
+
+      <!-- Avatar + name -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow-hover);">
+
+        <!-- Banner -->
+        <div style="height:80px;background:linear-gradient(135deg,var(--accent),var(--accent-2));"></div>
+
+        <!-- Avatar -->
+        <div style="padding:0 28px 28px;margin-top:-36px;">
+          <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:28px;font-weight:700;color:#fff;border:3px solid var(--bg-card);box-shadow:0 4px 20px var(--accent-glow);margin-bottom:14px;">
+            {{ request.user.username|first|upper }}
+          </div>
+          <div style="font-family:var(--font-display);font-size:20px;font-weight:700;margin-bottom:4px;">{{ request.user.username }}</div>
+          <div style="font-size:14px;color:var(--text-muted);">{{ request.user.email|default:'No email set' }}</div>
+        </div>
+
+        <div style="border-top:1px solid var(--border);"></div>
+
+        <!-- Stats row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;text-align:center;padding:16px 0;">
+          <div style="padding:8px;border-right:1px solid var(--border);">
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--accent);">{{ favorites|length }}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Favourites</div>
+          </div>
+          <div style="padding:8px;">
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--accent);">{{ request.user.date_joined|date:"Y" }}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Member Since</div>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border);"></div>
+
+        <!-- Info rows -->
+        <div style="padding:16px 28px;">
+          {% if request.user.first_name or request.user.last_name %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:13px;color:var(--text-muted);">Full name</span>
+            <span style="font-size:14px;font-weight:600;">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+          </div>
+          {% endif %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:13px;color:var(--text-muted);">Last login</span>
+            <span style="font-size:14px;font-weight:600;">{{ request.user.last_login|date:"M d, Y" }}</span>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border);"></div>
+
+        <!-- Actions -->
+        <div style="padding:20px 28px;display:flex;flex-direction:column;gap:10px;">
+          <a class="btn btn-secondary" href="{% url 'password_change' %}" style="text-align:center;">Change password</a>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="btn btn-danger" type="submit" style="width:100%;">Log out</button>
+          </form>
+        </div>
+      </div>
+
     </div>
-    <div class="account-username">{{ request.user.username }}</div>
-    <div class="account-email">{{ request.user.email|default:'No email set' }}</div>
 
-    <div class="auth-divider"></div>
+    <!-- RIGHT: Favourites -->
+    <div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:24px;">
+        <h2 style="font-family:var(--font-display);font-size:24px;font-weight:700;">⭐ Favourite Cards</h2>
+        {% if favorites %}
+        <span style="font-size:13px;color:var(--text-muted);">{{ favorites|length }} card{{ favorites|length|pluralize }}</span>
+        {% endif %}
+      </div>
 
-    <div class="info-section" style="margin-bottom:0;">
-      {% if request.user.first_name or request.user.last_name %}
-      <div class="info-row">
-        <span class="info-label">Full name</span>
-        <span class="info-value">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+      {% if favorites %}
+      <div class="card-grid">
+        {% for fav in favorites %}
+        <a href="{{ fav.card.get_absolute_url }}" class="pokemon-card" style="display:block;">
+          <div class="card-image">
+            {% if fav.card.image_small %}
+            <img src="{{ fav.card.image_small }}" alt="{{ fav.card.name }}" loading="lazy">
+            {% else %}
+            <div class="card-image-placeholder">🎴</div>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <div class="card-types">
+              {% for t in fav.card.types.all %}
+              <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;">{{ t.name }}</span>
+              {% endfor %}
+            </div>
+            <div class="card-name">{{ fav.card.name }}</div>
+            <div class="card-meta">
+              <span class="card-hp">{% if fav.card.hp %}<strong>{{ fav.card.hp }}</strong> HP{% endif %}</span>
+              {% if fav.card.market_price %}<span class="card-price">${{ fav.card.market_price }}</span>{% endif %}
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+
+      {% else %}
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:80px 40px;text-align:center;">
+        <div style="font-size:56px;margin-bottom:16px;">🤍</div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:8px;">No favourites yet</div>
+        <div style="font-size:14px;color:var(--text-muted);margin-bottom:24px;">Browse cards and hit ❤️ to save them here.</div>
+        <a href="{% url 'cards:card_list' %}" class="btn btn-primary">Browse Cards</a>
       </div>
       {% endif %}
-      <div class="info-row">
-        <span class="info-label">Member since</span>
-        <span class="info-value">{{ request.user.date_joined|date:"M Y" }}</span>
-      </div>
-      <div class="info-row" style="border-bottom:none;">
-        <span class="info-label">Last login</span>
-        <span class="info-value">{{ request.user.last_login|date:"M d, Y" }}</span>
-      </div>
     </div>
 
-    <div class="auth-divider"></div>
-
-    <div class="account-actions">
-      <a class="btn btn-secondary" href="{% url 'password_change' %}">Change password</a>
-      <form method="post" action="{% url 'logout' %}">
-        {% csrf_token %}
-        <button class="btn btn-danger" type="submit">Log out</button>
-      </form>
-    </div>
   </div>
 </div>
+
+<!-- Responsive -->
+<style>
+@media(max-width:768px){
+  div[style*="grid-template-columns:300px"] {
+    display: block !important;
+  }
+  div[style*="position:sticky"] {
+    position: static !important;
+    margin-bottom: 32px;
+  }
+}
+</style>
+
 {% endblock %}

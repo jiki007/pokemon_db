@@ -12,6 +12,7 @@ urlpatterns = [
     path('cards/<str:card_id>/edit/', views.card_edit, name='card_edit'),
     path('cards/<str:card_id>/delete/', views.card_delete, name='card_delete'),
     path('cards/<str:card_id>/', views.card_detail, name='card_detail'),
+    path('cards/<str:card_id>/favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('sets/', views.set_list, name='set_list'),
     path('sets/compare/', views.set_compare, name='set_compare'),
     path('sets/<str:set_id>/', views.set_detail, name='set_detail'),

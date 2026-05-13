@@ -12,7 +12,7 @@ class AttackInline(admin.TabularInline):
     model = Attack
     extra = 0
     fields = ['name', 'damage', 'converted_cost', 'description']
-    readonly_fields = ('converted_cost')
+    readonly_fields = ('converted_cost',)
 
 class WeaknessInline(admin.TabularInline):
     model = Weakness
@@ -52,7 +52,7 @@ class CardAdmin(admin.ModelAdmin):
             'fields': ('image_small', 'image_large', 'artist', 'flavor_text')
         }),
         ('Relations', {
-            'fields': ('card_set', 'types')
+            'fields': ('card_set',)
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),

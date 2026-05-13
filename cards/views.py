@@ -3,8 +3,9 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Avg, Count, Max
 from django.core.paginator import Paginator
+from django.http import JsonResponse
 
-from .models import Card, Cardset, Type, Price,Attack
+from .models import Card, Cardset, Type, Price,Attack, Favorite
 from .forms import SignUpForm
 
 
@@ -108,9 +109,15 @@ def card_detail(request, card_id):
         .prefetch_related('types')
         .distinct()[:6]
     )
+    is_favorited = (
+        request.user.is_authenticated and 
+        Favorite.objects.filter(user=request.user, card=card).exists()
+    )
+
     return render(request, 'cards/card_detail.html', {
         'card':    card,
         'related': related,
+        'is_favorited':is_favorited,
     })
 
 
@@ -526,10 +533,24 @@ def insights(request):
         'hp_buckets':hp_buckets,
     })
 
+@login_required
+def toggle_favorite(request, card_id):
+    card = get_object_or_404(Card, card_id=card_id)
+    fav, created = Favorite.objects.get_or_create(user=request.user, card=card)
+    if not created:
+        fav.delete()
+        return JsonResponse({'status':'removed'})
+    return JsonResponse({'status':'added'})
 
 @login_required
 def account(request):
-    return render(request, 'registration/account.html')
+    favorites = (
+        Favorite.objects.filter(user=request.user)
+        .select_related('card__card_set')
+        .prefetch_related('card__types')
+        .order_by('-created_at')
+    )
+    return render(request, 'registration/account.html', {'favorites': favorites})
 
 
 def handler404(request, exception):
