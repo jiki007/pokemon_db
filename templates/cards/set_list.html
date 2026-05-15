@@ -3,21 +3,22 @@
 {% block title %}Sets{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container py-4">
+
   <div class="page-header">
     <h1 class="page-title">Card Sets</h1>
-    <p class="page-meta">{{ page_obj.paginator.count }} sets</p>
+    <p class="page-meta">{{ page_obj.paginator.count }} set{{ page_obj.paginator.count|pluralize }}</p>
   </div>
 
   <!-- Search -->
-  <div class="filter-panel">
+  <div class="filter-panel mb-4">
     <form method="get">
       <div class="row g-3 align-items-end">
         <div class="col-12 col-md-5">
           <label class="filter-label">Search</label>
           <div class="input-group">
-            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search sets…">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" name="q" value="{{ q }}" class="form-control border-start-0 ps-0" placeholder="Search sets…">
           </div>
         </div>
         <div class="col-12 col-md-4">
@@ -51,7 +52,7 @@
         {% endif %}
         <div class="set-name">{{ s.name }}</div>
         <div class="set-series">{{ s.series }}</div>
-        <div class="d-flex justify-content-between align-items-center mt-2">
+        <div class="d-flex justify-content-between align-items-center mt-auto pt-2">
           <small class="text-muted">{{ s.card_count }} cards</small>
           {% if s.release_date %}
           <small class="text-muted">{{ s.release_date.year }}</small>
@@ -62,13 +63,48 @@
     {% endfor %}
   </div>
 
-  {% include 'components/pagination.html' %}
+  <!-- Pagination -->
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav class="d-flex justify-content-center align-items-center gap-2 my-5">
+    {% if page_obj.has_previous %}
+    <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-double-left"></i></a>
+    <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-double-left"></i></button>
+    <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i></button>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if num == page_obj.number %}
+      <button class="btn btn-primary btn-sm" style="min-width:36px;">{{ num }}</button>
+      {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+      <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}" class="btn btn-outline-secondary btn-sm" style="min-width:36px;">{{ num }}</a>
+      {% elif num == 1 or num == page_obj.paginator.num_pages %}
+      <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}" class="btn btn-outline-secondary btn-sm" style="min-width:36px;">{{ num }}</a>
+      {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+      <span class="text-muted px-1">…</span>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-right"></i></a>
+    <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-double-right"></i></a>
+    {% else %}
+    <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-right"></i></button>
+    <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-double-right"></i></button>
+    {% endif %}
+  </nav>
+  <p class="text-center text-muted small mb-5">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  </p>
+  {% endif %}
 
   {% else %}
   <div class="text-center py-5">
-    <div style="font-size:48px;margin-bottom:16px;">🃏</div>
+    <div style="font-size:48px;" class="mb-3">🃏</div>
     <h3 class="mb-2">No sets found</h3>
     <p class="text-muted">Try a different search term.</p>
+    <a href="{% url 'cards:set_list' %}" class="btn btn-outline-secondary mt-2">Clear filters</a>
   </div>
   {% endif %}
 

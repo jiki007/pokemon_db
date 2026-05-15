@@ -3,79 +3,152 @@
 {% block title %}Cards{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container py-4">
+
   <div class="page-header">
-    <h1 class="page-title">Card Collection </h1>
+    <h1 class="page-title">Card Collection</h1>
     <p class="page-meta">{{ total|intcomma }} card{{ total|pluralize }} found</p>
   </div>
 
-  <div class="search-form-wrap">
+  <!-- Filters -->
+  <div class="filter-panel mb-4">
     <form method="get">
-      <div class="search-main">
-        <input type="text" name="q" value="{{ q }}" placeholder="Search by name, artist…" class="search-input">
-        <button type="submit" class="btn btn-primary">Search</button>
-        {% if request.GET %}<a href="{% url 'cards:card_list' %}" class="btn btn-secondary">Clear</a>{% endif %}
+
+      <!-- Search row -->
+      <div class="input-group mb-3">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ q }}" placeholder="Search by name, artist…" class="form-control border-start-0 ps-0">
+        <button type="submit" class="btn btn-primary px-4">Search</button>
+        {% if request.GET %}
+        <a href="{% url 'cards:card_list' %}" class="btn btn-outline-secondary">Clear</a>
+        {% endif %}
       </div>
-      <div class="filter-row">
-        <div class="filter-group">
+
+      <!-- Filter row -->
+      <div class="row g-2 align-items-end">
+        <div class="col-6 col-md">
           <label class="filter-label">Type</label>
-          <select name="type">
+          <select name="type" class="form-select form-select-sm">
             <option value="">All Types</option>
             {% for t in types %}
             <option value="{{ t.name }}" {% if request.GET.type == t.name %}selected{% endif %}>{{ t.icon }} {{ t.name }}</option>
             {% endfor %}
           </select>
         </div>
-        <div class="filter-group">
+        <div class="col-6 col-md">
           <label class="filter-label">Rarity</label>
-          <select name="rarity">
+          <select name="rarity" class="form-select form-select-sm">
             <option value="">All Rarities</option>
             {% for val, label in rarities %}
             <option value="{{ val }}" {% if request.GET.rarity == val %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </div>
-        <div class="filter-group">
+        <div class="col-6 col-md">
           <label class="filter-label">Set</label>
-          <select name="set">
+          <select name="set" class="form-select form-select-sm">
             <option value="">All Sets</option>
             {% for s in sets %}
             <option value="{{ s.set_id }}" {% if request.GET.set == s.set_id %}selected{% endif %}>{{ s.name }}</option>
             {% endfor %}
           </select>
         </div>
-        <div class="filter-group">
+        <div class="col-6 col-md">
           <label class="filter-label">HP Range</label>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <input type="number" name="hp_min" value="{{ request.GET.hp_min }}" placeholder="Min" min="0">
-            <span style="color:var(--text-muted);">–</span>
-            <input type="number" name="hp_max" value="{{ request.GET.hp_max }}" placeholder="Max" min="0">
+          <div class="d-flex gap-1 align-items-center">
+            <input type="number" name="hp_min" value="{{ request.GET.hp_min }}" placeholder="Min" min="0" class="form-control form-control-sm" style="width:70px;">
+            <span class="text-muted small">–</span>
+            <input type="number" name="hp_max" value="{{ request.GET.hp_max }}" placeholder="Max" min="0" class="form-control form-control-sm" style="width:70px;">
           </div>
         </div>
-        <div class="filter-group">
+        <div class="col-6 col-md">
           <label class="filter-label">Sort By</label>
-          <select name="ordering">
-            <option value="name"      {% if request.GET.ordering == 'name' %}selected{% endif %}>Name A–Z</option>
-            <option value="-name"     {% if request.GET.ordering == '-name' %}selected{% endif %}>Name Z–A</option>
-            <option value="-hp"       {% if request.GET.ordering == '-hp' %}selected{% endif %}>Highest HP</option>
-            <option value="hp"        {% if request.GET.ordering == 'hp' %}selected{% endif %}>Lowest HP</option>
-            <option value="-price"    {% if request.GET.ordering == '-price' %}selected{% endif %}>Price: High to Low</option>
-            <option value="price"     {% if request.GET.ordering == 'price' %}selected{% endif %}>Price: Low to High</option>
+          <select name="ordering" class="form-select form-select-sm">
+            <option value="name"        {% if request.GET.ordering == 'name' %}selected{% endif %}>Name A–Z</option>
+            <option value="-name"       {% if request.GET.ordering == '-name' %}selected{% endif %}>Name Z–A</option>
+            <option value="-hp"         {% if request.GET.ordering == '-hp' %}selected{% endif %}>Highest HP</option>
+            <option value="hp"          {% if request.GET.ordering == 'hp' %}selected{% endif %}>Lowest HP</option>
+            <option value="-price"      {% if request.GET.ordering == '-price' %}selected{% endif %}>Price: High–Low</option>
+            <option value="price"       {% if request.GET.ordering == 'price' %}selected{% endif %}>Price: Low–High</option>
             <option value="-created_at" {% if request.GET.ordering == '-created_at' %}selected{% endif %}>Newest First</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-secondary" style="margin-top:20px;">Apply</button>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary btn-sm px-4">Apply</button>
+        </div>
       </div>
+
     </form>
   </div>
 
-{% include 'components/card_grid.html' with cards=page_obj %}
-{% include 'components/pagination.html' %}
+  <!-- Card grid -->
+  {% include 'components/card_grid.html' with cards=page_obj %}
 
-  <div style="text-align:center;padding:80px 0;">
-    <div style="font-size:48px;margin-bottom:16px;">🔍</div>
-    <h3 style="font-size:20px;margin-bottom:8px;">No cards found</h3>
-    <p style="color:var(--text-muted);">Try adjusting your filters.</p>
+  <!-- Pagination -->
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav class="d-flex justify-content-center align-items-center gap-2 my-5">
+
+    <!-- First & Prev -->
+    {% if page_obj.has_previous %}
+    <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1"
+       class="btn btn-outline-secondary btn-sm" title="First">
+      <i class="bi bi-chevron-double-left"></i>
+    </a>
+    <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
+       class="btn btn-outline-secondary btn-sm" title="Previous">
+      <i class="bi bi-chevron-left"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-double-left"></i></button>
+    <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i></button>
+    {% endif %}
+
+    <!-- Page numbers -->
+    {% for num in page_obj.paginator.page_range %}
+      {% if num == page_obj.number %}
+      <button class="btn btn-primary btn-sm" style="min-width:36px;">{{ num }}</button>
+      {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+      <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}"
+         class="btn btn-outline-secondary btn-sm" style="min-width:36px;">{{ num }}</a>
+      {% elif num == 1 or num == page_obj.paginator.num_pages %}
+      <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}"
+         class="btn btn-outline-secondary btn-sm" style="min-width:36px;">{{ num }}</a>
+      {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+      <span class="text-muted px-1">…</span>
+      {% endif %}
+    {% endfor %}
+
+    <!-- Next & Last -->
+    {% if page_obj.has_next %}
+    <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
+       class="btn btn-outline-secondary btn-sm" title="Next">
+      <i class="bi bi-chevron-right"></i>
+    </a>
+    <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}"
+       class="btn btn-outline-secondary btn-sm" title="Last">
+      <i class="bi bi-chevron-double-right"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-right"></i></button>
+    <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-double-right"></i></button>
+    {% endif %}
+
+  </nav>
+
+  <p class="text-center text-muted small mb-5">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} — {{ total|intcomma }} cards total
+  </p>
+  {% endif %}
+
+  <!-- Empty state -->
+  {% if not page_obj %}
+  <div class="text-center py-5">
+    <div style="font-size:48px;" class="mb-3">🔍</div>
+    <h3 class="mb-2">No cards found</h3>
+    <p class="text-muted">Try adjusting your filters.</p>
+    <a href="{% url 'cards:card_list' %}" class="btn btn-outline-secondary mt-2">Clear filters</a>
   </div>
+  {% endif %}
+
 </div>
 {% endblock %}

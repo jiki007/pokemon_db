@@ -3,172 +3,178 @@
 {% block title %}Compare Sets{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container py-4">
+
   <div class="page-header">
     <h1 class="page-title">Set Comparison</h1>
     <p class="page-meta">Compare two card sets side by side</p>
   </div>
 
   <!-- Picker -->
-  <div class="search-form-wrap" style="margin-bottom:32px;">
-    <form method="get" style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
-      <div class="filter-group">
-        <label class="filter-label">Set A</label>
-        <select name="a" style="min-width:220px;">
-          <option value="">— choose a set —</option>
-          {% for s in sets %}
-          <option value="{{ s.set_id }}" {% if s.set_id == sel_a %}selected{% endif %}>{{ s.name }}</option>
-          {% endfor %}
-        </select>
+  <div class="filter-panel mb-5">
+    <form method="get">
+      <div class="row g-3 align-items-end justify-content-center">
+        <div class="col-12 col-md-4">
+          <label class="filter-label">Set A</label>
+          <select name="a" class="form-select">
+            <option value="">— choose a set —</option>
+            {% for s in sets %}
+            <option value="{{ s.set_id }}" {% if s.set_id == sel_a %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-auto text-center">
+          <span class="fw-bold text-muted fs-5">vs</span>
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="filter-label">Set B</label>
+          <select name="b" class="form-select">
+            <option value="">— choose a set —</option>
+            {% for s in sets %}
+            <option value="{{ s.set_id }}" {% if s.set_id == sel_b %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-auto">
+          <button type="submit" class="btn btn-primary w-100 px-4">Compare</button>
+        </div>
       </div>
-      <div style="font-size:24px;padding-bottom:6px;color:var(--text-muted);">vs</div>
-      <div class="filter-group">
-        <label class="filter-label">Set B</label>
-        <select name="b" style="min-width:220px;">
-          <option value="">— choose a set —</option>
-          {% for s in sets %}
-          <option value="{{ s.set_id }}" {% if s.set_id == sel_b %}selected{% endif %}>{{ s.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <button type="submit" class="btn btn-primary">Compare</button>
     </form>
   </div>
 
   {% if data_a and data_b %}
 
-  <!-- Header row -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
-   <div class="info-section" style="text-align:center;">
-  {% if data_a.set.logo_url %}
-  <img src="{{ data_a.set.logo_url }}" alt="{{ data_a.set.name }}" style="height:60px;object-fit:contain;margin:0 auto 12px;">
-  {% endif %}
-  <div style="font-family:var(--font-display);font-size:20px;font-weight:700;">
-    {{ data_a.set.name }}
-  </div>
-  <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">
-    {{ data_a.set.series }}
-  </div>
-</div>
-
-<div class="info-section" style="text-align:center;">
-  {% if data_b.set.logo_url %}
-  <img src="{{ data_b.set.logo_url }}" alt="{{ data_b.set.name }}" style="height:60px;object-fit:contain;margin:0 auto 12px;">
-  {% endif %}
-  <div style="font-family:var(--font-display);font-size:20px;font-weight:700;">
-    {{ data_b.set.name }}
-  </div>
-  <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">
-    {{ data_b.set.series }}
-  </div>
-</div>
+  <!-- Set headers -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="bg-white border rounded-4 shadow-sm p-4 text-center">
+        {% if data_a.set.logo_url %}
+        <img src="{{ data_a.set.logo_url }}" alt="{{ data_a.set.name }}" style="height:60px;object-fit:contain;" class="mb-3">
+        {% endif %}
+        <div class="font-display fw-bold fs-5">{{ data_a.set.name }}</div>
+        <div class="text-muted small">{{ data_a.set.series }}</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="bg-white border rounded-4 shadow-sm p-4 text-center">
+        {% if data_b.set.logo_url %}
+        <img src="{{ data_b.set.logo_url }}" alt="{{ data_b.set.name }}" style="height:60px;object-fit:contain;" class="mb-3">
+        {% endif %}
+        <div class="font-display fw-bold fs-5">{{ data_b.set.name }}</div>
+        <div class="text-muted small">{{ data_b.set.series }}</div>
+      </div>
+    </div>
   </div>
 
   <!-- Key stats -->
-  <div class="info-section" style="margin-bottom:24px;">
-    <div class="info-section-title">📊 Key Stats</div>
-    {% for label, val_a, val_b in stats_rows %}{% endfor %}
-
+  <div class="info-panel mb-4">
+    <div class="info-panel-title">📊 Key Stats</div>
     <div class="info-row">
       <span class="info-label">Total Cards</span>
-      <div style="display:flex;gap:48px;">
-        <span style="font-family:var(--font-display);font-weight:700;color:{% if data_a.total >= data_b.total %}var(--accent){% else %}var(--text-primary){% endif %};">{{ data_a.total }}</span>
-        <span style="font-family:var(--font-display);font-weight:700;color:{% if data_b.total >= data_a.total %}var(--accent){% else %}var(--text-primary){% endif %};">{{ data_b.total }}</span>
+      <div class="d-flex gap-5">
+        <span class="font-display fw-bold {% if data_a.total >= data_b.total %}text-accent{% endif %}">{{ data_a.total }}</span>
+        <span class="font-display fw-bold {% if data_b.total >= data_a.total %}text-accent{% endif %}">{{ data_b.total }}</span>
       </div>
     </div>
     <div class="info-row">
       <span class="info-label">Average HP</span>
-      <div style="display:flex;gap:48px;">
-        <span style="font-family:var(--font-display);font-weight:700;color:{% if data_a.avg_hp and data_b.avg_hp and data_a.avg_hp >= data_b.avg_hp %}var(--accent){% else %}var(--text-primary){% endif %};">{{ data_a.avg_hp|floatformat:1|default:"—" }}</span>
-        <span style="font-family:var(--font-display);font-weight:700;color:{% if data_a.avg_hp and data_b.avg_hp and data_b.avg_hp >= data_a.avg_hp %}var(--accent){% else %}var(--text-primary){% endif %};">{{ data_b.avg_hp|floatformat:1|default:"—" }}</span>
+      <div class="d-flex gap-5">
+        <span class="font-display fw-bold {% if data_a.avg_hp and data_b.avg_hp and data_a.avg_hp >= data_b.avg_hp %}text-accent{% endif %}">{{ data_a.avg_hp|floatformat:1|default:"—" }}</span>
+        <span class="font-display fw-bold {% if data_a.avg_hp and data_b.avg_hp and data_b.avg_hp >= data_a.avg_hp %}text-accent{% endif %}">{{ data_b.avg_hp|floatformat:1|default:"—" }}</span>
       </div>
     </div>
     <div class="info-row">
       <span class="info-label">Max HP</span>
-      <div style="display:flex;gap:48px;">
-        <span style="font-family:var(--font-display);font-weight:700;color:{% if data_a.max_hp and data_b.max_hp and data_a.max_hp >= data_b.max_hp %}var(--accent){% else %}var(--text-primary){% endif %};">{{ data_a.max_hp|default:"—" }}</span>
-        <span style="font-family:var(--font-display);font-weight:700;color:{% if data_a.max_hp and data_b.max_hp and data_b.max_hp >= data_a.max_hp %}var(--accent){% else %}var(--text-primary){% endif %};">{{ data_b.max_hp|default:"—" }}</span>
+      <div class="d-flex gap-5">
+        <span class="font-display fw-bold {% if data_a.max_hp and data_b.max_hp and data_a.max_hp >= data_b.max_hp %}text-accent{% endif %}">{{ data_a.max_hp|default:"—" }}</span>
+        <span class="font-display fw-bold {% if data_a.max_hp and data_b.max_hp and data_b.max_hp >= data_a.max_hp %}text-accent{% endif %}">{{ data_b.max_hp|default:"—" }}</span>
       </div>
     </div>
     <div class="info-row" style="border-bottom:none;">
       <span class="info-label">Avg Market Price</span>
-      <div style="display:flex;gap:48px;">
-        <span style="font-family:var(--font-display);font-weight:700;color:{% if data_a.avg_price and data_b.avg_price and data_a.avg_price >= data_b.avg_price %}var(--accent){% else %}var(--text-primary){% endif %};">${{ data_a.avg_price|floatformat:2|default:"—" }}</span>
-        <span style="font-family:var(--font-display);font-weight:700;color:{% if data_a.avg_price and data_b.avg_price and data_b.avg_price >= data_a.avg_price %}var(--accent){% else %}var(--text-primary){% endif %};">${{ data_b.avg_price|floatformat:2|default:"—" }}</span>
+      <div class="d-flex gap-5">
+        <span class="font-display fw-bold {% if data_a.avg_price and data_b.avg_price and data_a.avg_price >= data_b.avg_price %}text-accent{% endif %}">${{ data_a.avg_price|floatformat:2|default:"—" }}</span>
+        <span class="font-display fw-bold {% if data_a.avg_price and data_b.avg_price and data_b.avg_price >= data_a.avg_price %}text-accent{% endif %}">${{ data_b.avg_price|floatformat:2|default:"—" }}</span>
       </div>
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
-
-    <!-- Rarity breakdown -->
-<div class="info-section">
-      <div class="info-section-title">✨ {{ data_a.set.name }} — Rarity Breakdown</div>
-      {% for r in data_a.by_rarity %}
-      <div class="info-row">
-        <span style="color:var(--text-secondary);font-size:13px;">{{ r.rarity }}</span>
-        <span style="font-weight:700;">{{ r.cnt }}</span>
+  <!-- Rarity breakdown -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="info-panel h-100">
+        <div class="info-panel-title">✨ {{ data_a.set.name }} — Rarity Breakdown</div>
+        {% for r in data_a.by_rarity %}
+        <div class="info-row">
+          <span class="text-secondary small">{{ r.rarity }}</span>
+          <span class="fw-bold">{{ r.cnt }}</span>
+        </div>
+        {% empty %}
+        <p class="text-muted small">No data.</p>
+        {% endfor %}
       </div>
-      {% empty %}
-      <p style="color:var(--text-muted);font-size:13px;">No data.</p>
-      {% endfor %}
     </div>
-    <div class="info-section">
-      <div class="info-section-title">✨ {{ data_b.set.name }} — Rarity Breakdown</div>
-      {% for r in data_b.by_rarity %}
-      <div class="info-row">
-        <span style="color:var(--text-secondary);font-size:13px;">{{ r.rarity }}</span>
-        <span style="font-weight:700;">{{ r.cnt }}</span>
+    <div class="col-md-6">
+      <div class="info-panel h-100">
+        <div class="info-panel-title">✨ {{ data_b.set.name }} — Rarity Breakdown</div>
+        {% for r in data_b.by_rarity %}
+        <div class="info-row">
+          <span class="text-secondary small">{{ r.rarity }}</span>
+          <span class="fw-bold">{{ r.cnt }}</span>
+        </div>
+        {% empty %}
+        <p class="text-muted small">No data.</p>
+        {% endfor %}
       </div>
-      {% empty %}
-      <p style="color:var(--text-muted);font-size:13px;">No data.</p>
-      {% endfor %}
     </div>
-
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px;">
-
-    <!-- Top 5 most expensive -->
-    <div class="info-section">
-      <div class="info-section-title">💰 {{ data_a.set.name }} — Top 5 Most Valuable</div>
-      {% for p in data_a.top_cards %}
-      <div class="info-row">
-        <div style="font-size:13px;color:var(--text-muted);width:20px;flex-shrink:0;">{{ forloop.counter }}</div>
-        <div style="flex:1;font-size:14px;font-weight:600;">
-          <a href="{{ p.card.get_absolute_url }}" style="color:var(--accent);">{{ p.card.name }}</a>
+  <!-- Top 5 most valuable -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-6">
+      <div class="info-panel h-100">
+        <div class="info-panel-title">💰 {{ data_a.set.name }} — Top 5 Most Valuable</div>
+        {% for p in data_a.top_cards %}
+        <div class="info-row">
+          <div class="d-flex gap-3 align-items-center">
+            <span class="small text-muted" style="width:20px;">{{ forloop.counter }}</span>
+            <a href="{{ p.card.get_absolute_url }}" class="fw-semibold text-decoration-none" style="color:var(--accent);">{{ p.card.name }}</a>
+          </div>
+          <span class="font-display fw-bold">${{ p.tcg_market }}</span>
         </div>
-        <div style="font-family:var(--font-display);font-weight:700;">${{ p.tcg_market }}</div>
+        {% empty %}
+        <p class="text-muted small">No price data.</p>
+        {% endfor %}
       </div>
-      {% empty %}
-      <p style="color:var(--text-muted);font-size:13px;">No price data.</p>
-      {% endfor %}
     </div>
-    <div class="info-section">
-      <div class="info-section-title">💰 {{ data_b.set.name }} — Top 5 Most Valuable</div>
-      {% for p in data_b.top_cards %}
-      <div class="info-row">
-        <div style="font-size:13px;color:var(--text-muted);width:20px;flex-shrink:0;">{{ forloop.counter }}</div>
-        <div style="flex:1;font-size:14px;font-weight:600;">
-          <a href="{{ p.card.get_absolute_url }}" style="color:var(--accent);">{{ p.card.name }}</a>
+    <div class="col-md-6">
+      <div class="info-panel h-100">
+        <div class="info-panel-title">💰 {{ data_b.set.name }} — Top 5 Most Valuable</div>
+        {% for p in data_b.top_cards %}
+        <div class="info-row">
+          <div class="d-flex gap-3 align-items-center">
+            <span class="small text-muted" style="width:20px;">{{ forloop.counter }}</span>
+            <a href="{{ p.card.get_absolute_url }}" class="fw-semibold text-decoration-none" style="color:var(--accent);">{{ p.card.name }}</a>
+          </div>
+          <span class="font-display fw-bold">${{ p.tcg_market }}</span>
         </div>
-        <div style="font-family:var(--font-display);font-weight:700;">${{ p.tcg_market }}</div>
+        {% empty %}
+        <p class="text-muted small">No price data.</p>
+        {% endfor %}
       </div>
-      {% empty %}
-      <p style="color:var(--text-muted);font-size:13px;">No price data.</p>
-      {% endfor %}
     </div>
   </div>
 
   {% elif sel_a and sel_b and sel_a == sel_b %}
-  <div style="text-align:center;padding:60px 0;">
-    <div style="font-size:48px;margin-bottom:16px;">🤔</div>
-    <p style="color:var(--text-muted);">Please select two different sets to compare.</p>
+  <div class="text-center py-5">
+    <div style="font-size:48px;" class="mb-3">🤔</div>
+    <p class="text-muted">Please select two different sets to compare.</p>
   </div>
+
   {% else %}
-  <div style="text-align:center;padding:60px 0;">
-    <div style="font-size:48px;margin-bottom:16px;">⚖️</div>
-    <p style="color:var(--text-muted);">Select two sets above to see the comparison.</p>
+  <div class="text-center py-5">
+    <div style="font-size:48px;" class="mb-3">⚖️</div>
+    <p class="text-muted">Select two sets above to see the comparison.</p>
   </div>
   {% endif %}
 

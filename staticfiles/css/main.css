@@ -83,7 +83,12 @@ a { text-decoration: none; }
 .set-series { font-size: 12px; color: #888; margin-bottom: 10px; }
 
 /* ── Page header ──────────────────────────────────────────────── */
-.page-header { padding: 40px 0 32px; border-bottom: 1px solid rgba(0,0,0,0.07); margin-bottom: 36px; }
+.page-header {
+  padding: 40px 0 32px;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  margin-bottom: 36px;
+  text-align: center;
+}
 .page-title { font-family: var(--font-display); font-size: clamp(24px,4vw,38px); font-weight: 700; margin-bottom: 6px; }
 .page-meta { font-size: 14px; color: #888; }
 

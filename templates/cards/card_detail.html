@@ -2,10 +2,10 @@
 {% block title %}{{ card.name }}{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container py-4">
 
   <!-- Breadcrumbs -->
-  <nav aria-label="breadcrumb">
+  <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
       <li class="breadcrumb-item"><a href="{% url 'cards:home' %}">Home</a></li>
       <li class="breadcrumb-item"><a href="{% url 'cards:card_list' %}">Cards</a></li>
@@ -16,18 +16,20 @@
     </ol>
   </nav>
 
-  <div class="row g-5 mt-1">
+  <div class="row g-5">
 
     <!-- Left: Image -->
     <div class="col-lg-4">
-      <div class="card-detail-sticky">
-        <div class="card-detail-img mb-3">
+      <div class="sticky-top" style="top:90px;">
+
+        <!-- Card image -->
+        <div class="bg-white border rounded-4 overflow-hidden shadow-sm mb-3">
           {% if card.image_large %}
           <img src="{{ card.image_large }}" alt="{{ card.name }}" class="w-100">
           {% elif card.image_small %}
           <img src="{{ card.image_small }}" alt="{{ card.name }}" class="w-100">
           {% else %}
-          <div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;background:#f0f0f0;font-size:80px;">🎴</div>
+          <div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:80px;background:#f8f8f8;">🎴</div>
           {% endif %}
         </div>
 
@@ -46,48 +48,54 @@
 
         <!-- Actions -->
         <div class="d-flex gap-2">
-          <a href="{% url 'cards:card_edit' card.card_id %}" class="btn btn-outline-secondary flex-fill"><i class="bi bi-pencil"></i> Edit</a>
-        {% comment %} The favorite add button logic  {% endcomment %}
-        {% if request.user.is_authenticated %}
-        <button 
-          id="fav-btn"
-          class="btn {% if is_favorited %}btn-danger{% else %}btn-outline-secondary{% endif %} flex-fill"
-          data-card-id="{{ card.card_id }}"
-        >
-          <i class="bi {% if is_favorited %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
-          {% if is_favorited %}Unfavourite{% else %}Favourite{% endif %}
-        </button>
-        {% endif %}
-      {% comment %} The favorite add button logic  {% endcomment %}
-
-          <a href="{% url 'cards:card_delete' card.card_id %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i></a>
+          <a href="{% url 'cards:card_edit' card.card_id %}" class="btn btn-outline-secondary flex-fill">
+            <i class="bi bi-pencil"></i> Edit
+          </a>
+          {% if request.user.is_authenticated %}
+          <button
+            id="fav-btn"
+            class="btn {% if is_favorite %}btn-danger{% else %}btn-outline-secondary{% endif %} flex-fill"
+            data-card-id="{{ card.card_id }}"
+          >
+            <i class="bi {% if is_favorite %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+            {% if is_favorite %}Unfavourite{% else %}Favourite{% endif %}
+          </button>
+          {% endif %}
+          <a href="{% url 'cards:card_delete' card.card_id %}" class="btn btn-outline-danger">
+            <i class="bi bi-trash"></i>
+          </a>
         </div>
+
       </div>
     </div>
 
     <!-- Right: Details -->
     <div class="col-lg-8">
 
-      <!-- Title -->
-      {% if card.rarity %}
-      <span class="rarity-badge mb-2 d-inline-block">{{ card.rarity }}</span>
-      {% endif %}
-      <h1 class="font-display fw-bold mb-2" style="font-size:clamp(28px,4vw,48px);line-height:1.1;">{{ card.name }}</h1>
-      <div class="d-flex align-items-center gap-3 flex-wrap mb-4" style="font-size:16px;">
-        {% if card.hp %}<span>❤️ <strong class="text-danger">{{ card.hp }}</strong> HP</span>{% endif %}
-        {% if card.supertype %}<span class="text-muted">{{ card.supertype }}</span>{% endif %}
-        {% if card.card_set %}<a href="{{ card.card_set.get_absolute_url }}" class="text-accent fw-semibold">{{ card.card_set.name }}</a>{% endif %}
+      <!-- Title block -->
+      <div class="mb-4">
+        {% if card.rarity %}
+        <span class="rarity-badge d-inline-block mb-2">{{ card.rarity }}</span>
+        {% endif %}
+        <h1 class="font-display fw-bold mb-2" style="font-size:clamp(32px,5vw,52px);line-height:1.1;">{{ card.name }}</h1>
+        <div class="d-flex align-items-center gap-3 flex-wrap" style="font-size:16px;">
+          {% if card.hp %}<span>❤️ <strong class="text-danger">{{ card.hp }}</strong> HP</span>{% endif %}
+          {% if card.supertype %}<span class="text-muted">{{ card.supertype }}</span>{% endif %}
+          {% if card.card_set %}<a href="{{ card.card_set.get_absolute_url }}" class="text-accent fw-semibold">{{ card.card_set.name }}</a>{% endif %}
+        </div>
       </div>
 
       <!-- Add Card button -->
       <div class="mb-4">
-        <a href="{% url 'cards:card_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Card</a>
+        <a href="{% url 'cards:card_create' %}" class="btn btn-primary">
+          <i class="bi bi-plus-lg"></i> Add Card
+        </a>
       </div>
 
       <!-- Prices -->
       {% with price=card.price %}
       {% if price %}
-      <div class="info-panel">
+      <div class="info-panel mb-4">
         <div class="info-panel-title">💰 Market Prices</div>
         {% if price.tcg_market %}
         <div class="price-market mb-3">
@@ -126,7 +134,7 @@
       {% endwith %}
 
       <!-- Card Info -->
-      <div class="info-panel">
+      <div class="info-panel mb-4">
         <div class="info-panel-title">📋 Card Information</div>
         {% if card.card_set %}
         <div class="info-row">
@@ -180,7 +188,7 @@
 
       <!-- Flavor text -->
       {% if card.flavor_text %}
-      <div class="info-panel">
+      <div class="info-panel mb-4">
         <div class="info-panel-title">📖 Flavor Text</div>
         <p class="fst-italic text-secondary mb-0" style="font-size:16px;line-height:1.8;">{{ card.flavor_text }}</p>
       </div>
@@ -188,7 +196,7 @@
 
       <!-- Attacks -->
       {% if card.attacks.all %}
-      <div class="info-panel">
+      <div class="info-panel mb-4">
         <div class="info-panel-title">⚔️ Attacks</div>
         {% for atk in card.attacks.all %}
         <div class="attack-card">
@@ -207,8 +215,8 @@
 
   <!-- Related cards -->
   {% if related %}
-  <div class="mt-5">
-    <div class="section-head">
+  <div class="mt-5 pt-4 border-top">
+    <div class="section-head mb-4">
       <h2 class="section-title">Related Cards</h2>
     </div>
     <div class="card-grid">
@@ -238,7 +246,6 @@
 
 </div>
 
-
 <script>
 const favBtn = document.getElementById('fav-btn');
 if (favBtn) {
@@ -250,9 +257,7 @@ if (favBtn) {
     })
     .then(r => r.json())
     .then(data => {
-      const icon = favBtn.querySelector('i');
       if (data.status === 'added') {
-        icon.classList.replace('bi-heart', 'bi-heart-fill');
         favBtn.classList.replace('btn-outline-secondary', 'btn-danger');
         favBtn.innerHTML = '<i class="bi bi-heart-fill"></i> Unfavourite';
       } else {
@@ -262,7 +267,6 @@ if (favBtn) {
     });
   });
 }
-
 </script>
 
 {% endblock %}
