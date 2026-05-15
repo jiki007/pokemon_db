@@ -109,10 +109,10 @@ def card_detail(request, card_id):
         .prefetch_related('types')
         .distinct()[:6]
     )
-    is_favorited = (
-        request.user.is_authenticated and 
-        Favorite.objects.filter(user=request.user, card=card).exists()
-    )
+    is_favorited = False
+
+    if request.user.is_authenticated:
+        is_favorited = Favorite.objects.filter(user=request.user, card=card,).exists()
 
     return render(request, 'cards/card_detail.html', {
         'card':    card,

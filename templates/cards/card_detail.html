@@ -5,170 +5,173 @@
 <div class="container">
 
   <!-- Breadcrumbs -->
-  <div style="padding:28px 0 0;">
-    <div class="breadcrumbs" style="font-size:16px;">
-      <a href="{% url 'cards:home' %}">Home</a>
-      <span>›</span>
-      <a href="{% url 'cards:card_list' %}">Cards</a>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'cards:home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'cards:card_list' %}">Cards</a></li>
       {% if card.card_set %}
-      <span>›</span>
-      <a href="{{ card.card_set.get_absolute_url }}">{{ card.card_set.name }}</a>
+      <li class="breadcrumb-item"><a href="{{ card.card_set.get_absolute_url }}">{{ card.card_set.name }}</a></li>
       {% endif %}
-      <span>›</span>
-      <span>{{ card.name }}</span>
+      <li class="breadcrumb-item active">{{ card.name }}</li>
+    </ol>
+  </nav>
 
+  <div class="row g-5 mt-1">
 
-    </div>
-  </div>
+    <!-- Left: Image -->
+    <div class="col-lg-4">
+      <div class="card-detail-sticky">
+        <div class="card-detail-img mb-3">
+          {% if card.image_large %}
+          <img src="{{ card.image_large }}" alt="{{ card.name }}" class="w-100">
+          {% elif card.image_small %}
+          <img src="{{ card.image_small }}" alt="{{ card.name }}" class="w-100">
+          {% else %}
+          <div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;background:#f0f0f0;font-size:80px;">🎴</div>
+          {% endif %}
+        </div>
 
-  <div style="display:grid;grid-template-columns:420px 1fr;gap:56px;align-items:start;margin-top:36px;">
-
-    <!-- Left: image -->
-    <div style="position:sticky;top:88px;">
-      <div style="border-radius:24px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.6);transition:0.3s;">
-        {% if card.image_large %}
-        <img src="{{ card.image_large }}" alt="{{ card.name }}" style="width:100%;display:block;">
-        {% elif card.image_small %}
-        <img src="{{ card.image_small }}" alt="{{ card.name }}" style="width:100%;display:block;">
-        {% else %}
-        <div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);font-size:100px;">🎴</div>
+        <!-- Type badges -->
+        {% if card.types.all %}
+        <div class="d-flex gap-2 flex-wrap justify-content-center mb-3">
+          {% for t in card.types.all %}
+          <a href="{% url 'cards:card_list' %}?type={{ t.name }}"
+             class="type-badge text-decoration-none"
+             style="background:{{ t.color }}18;color:{{ t.color }};border:1.5px solid {{ t.color }}50;font-size:14px;padding:8px 18px;">
+            {{ t.icon }} {{ t.name }}
+          </a>
+          {% endfor %}
+        </div>
         {% endif %}
-      </div>
 
-      <!-- Type badges -->
-      {% if card.types.all %}
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;justify-content:center;">
-        {% for t in card.types.all %}
-        <a href="{% url 'cards:card_list' %}?type={{ t.name }}"
-           style="background:{{ t.color }}25;color:{{ t.color }};border:1.5px solid {{ t.color }}50;padding:10px 22px;border-radius:999px;font-size:16px;font-weight:600;transition:0.2s;display:inline-flex;align-items:center;gap:6px;">
-          {{ t.icon }} {{ t.name }}
-        </a>
-        {% endfor %}
+        <!-- Actions -->
+        <div class="d-flex gap-2">
+          <a href="{% url 'cards:card_edit' card.card_id %}" class="btn btn-outline-secondary flex-fill"><i class="bi bi-pencil"></i> Edit</a>
+        {% comment %} The favorite add button logic  {% endcomment %}
+        {% if request.user.is_authenticated %}
+        <button 
+          id="fav-btn"
+          class="btn {% if is_favorited %}btn-danger{% else %}btn-outline-secondary{% endif %} flex-fill"
+          data-card-id="{{ card.card_id }}"
+        >
+          <i class="bi {% if is_favorited %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+          {% if is_favorited %}Unfavourite{% else %}Favourite{% endif %}
+        </button>
+        {% endif %}
+      {% comment %} The favorite add button logic  {% endcomment %}
+
+          <a href="{% url 'cards:card_delete' card.card_id %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i></a>
+        </div>
       </div>
-      {% endif %}
     </div>
 
-    <!-- Right: details -->
-    <div>
+    <!-- Right: Details -->
+    <div class="col-lg-8">
 
-      <!-- Title block -->
+      <!-- Title -->
       {% if card.rarity %}
-      <span style="display:inline-flex;padding:6px 16px;border-radius:999px;font-size:14px;font-weight:700;background:rgba(255,203,5,0.12);color:var(--accent);border:1.5px solid rgba(255,203,5,0.3);margin-bottom:14px;">{{ card.rarity }}</span>
+      <span class="rarity-badge mb-2 d-inline-block">{{ card.rarity }}</span>
       {% endif %}
-
-      <h1 style="font-family:var(--font-display);font-size:clamp(36px,5vw,56px);font-weight:700;line-height:1.1;margin-bottom:16px;">{{ card.name }}</h1>
-
-      <div style="display:flex;gap:10px;margin-bottom:24px;">
-    <a href="{% url 'cards:card_create' %}" class="btn btn-primary">+ Add Card</a>
-    <a href="{% url 'cards:card_edit' card.card_id %}" class="btn btn-secondary">✏️ Edit</a>
-    <a href="{% url 'cards:card_delete' card.card_id %}"
-      style="background:rgba(204,0,0,0.08);color:var(--accent);border:1.5px solid rgba(204,0,0,0.2);padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:0.2s;">
-      🗑 Delete
-    </a>
-    {% if request.user.is_authenticated %}
-    <button
-      id="fav-btn"
-      data-card-id="{{ card.card_id }}"
-      style="background:{% if is_favourited %}rgba(204,0,0,0.12){% else %}var(--bg-elevated){% endif %};
-            color:{% if is_favourited %}var(--accent){% else %}var(--text-muted){% endif %};
-            border:1.5px solid {% if is_favourited %}rgba(204,0,0,0.3){% else %}var(--border){% endif %};
-            padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;
-            cursor:pointer;transition:0.2s;">
-      {% if is_favourited %}❤️ Unfavourite{% else %}🤍 Favourite{% endif %}
-    </button>
-    {% endif %}
-    </div>
-
-      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;font-size:17px;margin-bottom:32px;">
-        {% if card.hp %}
-        <span style="display:flex;align-items:center;gap:6px;">❤️ <strong style="color:#EF4444;font-size:20px;">{{ card.hp }}</strong> <span style="color:var(--text-muted);">HP</span></span>
-        {% endif %}
-        {% if card.supertype %}
-        <span style="color:var(--text-muted);">{{ card.supertype }}</span>
-        {% endif %}
-        {% if card.card_set %}
-        <a href="{{ card.card_set.get_absolute_url }}" style="color:var(--accent);font-weight:600;">{{ card.card_set.name }}</a>
-        {% endif %}
+      <h1 class="font-display fw-bold mb-2" style="font-size:clamp(28px,4vw,48px);line-height:1.1;">{{ card.name }}</h1>
+      <div class="d-flex align-items-center gap-3 flex-wrap mb-4" style="font-size:16px;">
+        {% if card.hp %}<span>❤️ <strong class="text-danger">{{ card.hp }}</strong> HP</span>{% endif %}
+        {% if card.supertype %}<span class="text-muted">{{ card.supertype }}</span>{% endif %}
+        {% if card.card_set %}<a href="{{ card.card_set.get_absolute_url }}" class="text-accent fw-semibold">{{ card.card_set.name }}</a>{% endif %}
       </div>
 
-      <!-- Market Prices -->
-     {% with price=card.price %}
-{% if price %}
-<div style="background:var(--bg-card);border:1px solid rgba(204,0,0,0.2);border-radius:20px;padding:28px;margin-bottom:20px;">
-  <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);">💰 Market Prices</div>
-  {% if price.tcg_market %}
-  <div style="text-align:center;background:linear-gradient(135deg,rgba(204,0,0,0.07),rgba(204,0,0,0.03));border:1.5px solid rgba(204,0,0,0.2);border-radius:14px;padding:20px;margin-bottom:16px;">
-    <div style="font-size:14px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Market Price</div>
-    <div style="font-family:var(--font-display);font-size:48px;font-weight:700;color:var(--accent);">${{ price.tcg_market }}</div>
-  </div>
-  {% endif %}
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-    {% if price.tcg_low %}
-    <div style="background:var(--bg-elevated);border-radius:12px;padding:16px;text-align:center;">
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">Low</div>
-      <div style="font-size:22px;font-weight:700;color:var(--accent);">${{ price.tcg_low }}</div>
-    </div>
-    {% endif %}
-    {% if price.tcg_mid %}
-    <div style="background:var(--bg-elevated);border-radius:12px;padding:16px;text-align:center;">
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">Mid</div>
-      <div style="font-size:22px;font-weight:700;color:var(--accent);">${{ price.tcg_mid }}</div>
-    </div>
-    {% endif %}
-    {% if price.tcg_high %}
-    <div style="background:var(--bg-elevated);border-radius:12px;padding:16px;text-align:center;">
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">High</div>
-      <div style="font-size:22px;font-weight:700;color:var(--accent);">${{ price.tcg_high }}</div>
-    </div>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-{% endwith %}
+      <!-- Add Card button -->
+      <div class="mb-4">
+        <a href="{% url 'cards:card_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Card</a>
+      </div>
+
+      <!-- Prices -->
+      {% with price=card.price %}
+      {% if price %}
+      <div class="info-panel">
+        <div class="info-panel-title">💰 Market Prices</div>
+        {% if price.tcg_market %}
+        <div class="price-market mb-3">
+          <div class="price-market-label">Market Price</div>
+          <div class="price-market-value">${{ price.tcg_market }}</div>
+        </div>
+        {% endif %}
+        <div class="row g-2">
+          {% if price.tcg_low %}
+          <div class="col-4">
+            <div class="price-item">
+              <div class="price-item-label">Low</div>
+              <div class="price-item-value">${{ price.tcg_low }}</div>
+            </div>
+          </div>
+          {% endif %}
+          {% if price.tcg_mid %}
+          <div class="col-4">
+            <div class="price-item">
+              <div class="price-item-label">Mid</div>
+              <div class="price-item-value">${{ price.tcg_mid }}</div>
+            </div>
+          </div>
+          {% endif %}
+          {% if price.tcg_high %}
+          <div class="col-4">
+            <div class="price-item">
+              <div class="price-item-label">High</div>
+              <div class="price-item-value">${{ price.tcg_high }}</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      {% endwith %}
 
       <!-- Card Info -->
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px;">
-        <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);">📋 Card Information</div>
+      <div class="info-panel">
+        <div class="info-panel-title">📋 Card Information</div>
         {% if card.card_set %}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
-          <span style="font-size:16px;color:var(--text-muted);">Set</span>
-          <a href="{{ card.card_set.get_absolute_url }}" style="color:var(--accent);font-size:17px;font-weight:600;">{{ card.card_set.name }}</a>
+        <div class="info-row">
+          <span class="info-label">Set</span>
+          <a href="{{ card.card_set.get_absolute_url }}" class="text-accent fw-semibold">{{ card.card_set.name }}</a>
         </div>
         {% endif %}
         {% if card.card_number %}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
-          <span style="font-size:16px;color:var(--text-muted);">Number</span>
-          <span style="font-size:17px;font-weight:600;">{{ card.card_number }}</span>
+        <div class="info-row">
+          <span class="info-label">Number</span>
+          <span class="info-value">{{ card.card_number }}</span>
         </div>
         {% endif %}
         {% if card.artist %}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
-          <span style="font-size:16px;color:var(--text-muted);">Artist</span>
-          <span style="font-size:17px;font-weight:600;">{{ card.artist }}</span>
+        <div class="info-row">
+          <span class="info-label">Artist</span>
+          <span class="info-value">{{ card.artist }}</span>
         </div>
         {% endif %}
         {% if card.evolves_from %}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
-          <span style="font-size:16px;color:var(--text-muted);">Evolves From</span>
-          <span style="font-size:17px;font-weight:600;">{{ card.evolves_from }}</span>
+        <div class="info-row">
+          <span class="info-label">Evolves From</span>
+          <span class="info-value">{{ card.evolves_from }}</span>
         </div>
         {% endif %}
         {% if card.weaknesses.all %}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);">
-          <span style="font-size:16px;color:var(--text-muted);">Weakness</span>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+        <div class="info-row">
+          <span class="info-label">Weakness</span>
+          <div class="d-flex gap-2 flex-wrap justify-content-end">
             {% for w in card.weaknesses.all %}
-            <span style="background:{{ w.type.color }}20;color:{{ w.type.color }};border:1.5px solid {{ w.type.color }}40;padding:6px 14px;border-radius:999px;font-size:15px;font-weight:600;">{{ w.type.icon }} {{ w.type.name }} {{ w.value }}</span>
+            <span class="type-badge" style="background:{{ w.type.color }}18;color:{{ w.type.color }};border:1.5px solid {{ w.type.color }}40;">
+              {{ w.type.icon }} {{ w.type.name }} {{ w.value }}
+            </span>
             {% endfor %}
           </div>
         </div>
         {% endif %}
         {% if card.resistances.all %}
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;">
-          <span style="font-size:16px;color:var(--text-muted);">Resistance</span>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+        <div class="info-row">
+          <span class="info-label">Resistance</span>
+          <div class="d-flex gap-2 flex-wrap justify-content-end">
             {% for r in card.resistances.all %}
-            <span style="background:{{ r.type.color }}20;color:{{ r.type.color }};border:1.5px solid {{ r.type.color }}40;padding:6px 14px;border-radius:999px;font-size:15px;font-weight:600;">{{ r.type.icon }} {{ r.type.name }} {{ r.value }}</span>
+            <span class="type-badge" style="background:{{ r.type.color }}18;color:{{ r.type.color }};border:1.5px solid {{ r.type.color }}40;">
+              {{ r.type.icon }} {{ r.type.name }} {{ r.value }}
+            </span>
             {% endfor %}
           </div>
         </div>
@@ -177,27 +180,23 @@
 
       <!-- Flavor text -->
       {% if card.flavor_text %}
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px;">
-        <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);">📖 Flavor Text</div>
-        <p style="font-style:italic;color:var(--text-secondary);font-size:17px;line-height:1.8;">{{ card.flavor_text }}</p>
+      <div class="info-panel">
+        <div class="info-panel-title">📖 Flavor Text</div>
+        <p class="fst-italic text-secondary mb-0" style="font-size:16px;line-height:1.8;">{{ card.flavor_text }}</p>
       </div>
       {% endif %}
 
       <!-- Attacks -->
       {% if card.attacks.all %}
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px;">
-        <div style="font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);">⚔️ Attacks</div>
+      <div class="info-panel">
+        <div class="info-panel-title">⚔️ Attacks</div>
         {% for atk in card.attacks.all %}
-        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <div style="font-size:20px;font-weight:700;">{{ atk.name }}</div>
-            {% if atk.damage %}
-            <div style="font-family:var(--font-display);font-size:28px;color:var(--accent);font-weight:700;">{{ atk.damage }}</div>
-            {% endif %}
+        <div class="attack-card">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="attack-name">{{ atk.name }}</div>
+            {% if atk.damage %}<div class="attack-damage">{{ atk.damage }}</div>{% endif %}
           </div>
-          {% if atk.description %}
-          <div style="font-size:16px;color:var(--text-secondary);line-height:1.7;">{{ atk.description }}</div>
-          {% endif %}
+          {% if atk.description %}<div class="attack-desc">{{ atk.description }}</div>{% endif %}
         </div>
         {% endfor %}
       </div>
@@ -208,30 +207,27 @@
 
   <!-- Related cards -->
   {% if related %}
-  <div style="margin-top:72px;">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:28px;">
-      <h2 style="font-family:var(--font-display);font-size:28px;font-weight:600;">Related Cards</h2>
+  <div class="mt-5">
+    <div class="section-head">
+      <h2 class="section-title">Related Cards</h2>
     </div>
     <div class="card-grid">
       {% for rc in related %}
-      <a href="{{ rc.get_absolute_url }}" class="pokemon-card" style="display:block;">
-        <div class="card-image">
-          {% if rc.image_small %}
-          <img src="{{ rc.image_small }}" alt="{{ rc.name }}" loading="lazy">
-          {% else %}
-          <div class="card-image-placeholder">🎴</div>
-          {% endif %}
+      <a href="{{ rc.get_absolute_url }}" class="pokemon-card">
+        <div class="card-img">
+          {% if rc.image_small %}<img src="{{ rc.image_small }}" alt="{{ rc.name }}" loading="lazy">
+          {% else %}<div class="card-img-placeholder">🎴</div>{% endif %}
         </div>
-        <div class="card-body">
+        <div class="card-info">
           <div class="card-types">
             {% for t in rc.types.all %}
-            <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;">{{ t.name }}</span>
+            <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;font-size:11px;">{{ t.name }}</span>
             {% endfor %}
           </div>
           <div class="card-name">{{ rc.name }}</div>
-          <div class="card-meta">
+          <div class="card-meta-row">
             <span class="card-hp">{% if rc.hp %}<strong>{{ rc.hp }}</strong> HP{% endif %}</span>
-            {% if rc.market_price %}<span class="card-price">${{ rc.market_price }}</span>{% endif %}
+            {% if rc.market_price %}<span class="card-price-tag">${{ rc.market_price }}</span>{% endif %}
           </div>
         </div>
       </a>
@@ -242,18 +238,6 @@
 
 </div>
 
-<!-- Responsive fix -->
-<style>
-@media(max-width:900px){
-  div[style*="grid-template-columns:420px"] {
-    display: block !important;
-  }
-  div[style*="position:sticky"] {
-    position: static !important;
-    margin-bottom: 32px;
-  }
-}
-</style>
 
 <script>
 const favBtn = document.getElementById('fav-btn');
@@ -266,19 +250,19 @@ if (favBtn) {
     })
     .then(r => r.json())
     .then(data => {
+      const icon = favBtn.querySelector('i');
       if (data.status === 'added') {
-        this.textContent = '❤️ Unfavourite';
-        this.style.background = 'rgba(204,0,0,0.12)';
-        this.style.color = 'var(--accent)';
-        this.style.borderColor = 'rgba(204,0,0,0.3)';
+        icon.classList.replace('bi-heart', 'bi-heart-fill');
+        favBtn.classList.replace('btn-outline-secondary', 'btn-danger');
+        favBtn.innerHTML = '<i class="bi bi-heart-fill"></i> Unfavourite';
       } else {
-        this.textContent = '🤍 Favourite';
-        this.style.background = 'var(--bg-elevated)';
-        this.style.color = 'var(--text-muted)';
-        this.style.borderColor = 'var(--border)';
+        favBtn.classList.replace('btn-danger', 'btn-outline-secondary');
+        favBtn.innerHTML = '<i class="bi bi-heart"></i> Favourite';
       }
     });
   });
 }
+
 </script>
+
 {% endblock %}

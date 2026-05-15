@@ -72,3 +72,4 @@ document.querySelectorAll('.pokemon-card').forEach(card => {
     card.style.transition = 'transform 0.15s ease';
   });
 });
+

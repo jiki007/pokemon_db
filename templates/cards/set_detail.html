@@ -5,24 +5,24 @@
 {% block content %}
 <div class="container">
 
-  <div style="padding:24px 0 0;">
-    <div class="breadcrumbs">
-      <a href="{% url 'cards:home' %}">Home</a>
-      <span>›</span>
-      <a href="{% url 'cards:set_list' %}">Sets</a>
-      <span>›</span>
-      <span>{{ card_set.name }}</span>
-    </div>
-  </div>
+  <!-- Breadcrumbs -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'cards:home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'cards:set_list' %}">Sets</a></li>
+      <li class="breadcrumb-item active">{{ card_set.name }}</li>
+    </ol>
+  </nav>
 
-  <div style="display:flex;align-items:flex-start;gap:32px;margin:32px 0 40px;flex-wrap:wrap;">
+  <!-- Set header -->
+  <div class="d-flex align-items-center gap-4 flex-wrap mb-5">
     {% if card_set.logo_url %}
     <img src="{{ card_set.logo_url }}" alt="{{ card_set.name }}" style="height:80px;object-fit:contain;">
     {% endif %}
-    <div style="flex:1;min-width:200px;">
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">{{ card_set.series }}</div>
-      <h1 style="font-family:var(--font-display);font-size:36px;font-weight:700;margin-bottom:10px;">{{ card_set.name }}</h1>
-      <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:14px;color:var(--text-secondary);">
+    <div class="flex-grow-1">
+      <div class="text-muted small mb-1">{{ card_set.series }}</div>
+      <h1 class="font-display fw-bold mb-2" style="font-size:clamp(24px,4vw,40px);">{{ card_set.name }}</h1>
+      <div class="d-flex gap-4 flex-wrap" style="font-size:15px;color:#666;">
         <span>🃏 {{ total }} cards</span>
         {% if card_set.release_date %}<span>📅 {{ card_set.release_date }}</span>{% endif %}
         {% if stats.avg_hp %}<span>❤️ Avg HP: {{ stats.avg_hp|floatformat:0 }}</span>{% endif %}
@@ -30,17 +30,12 @@
       </div>
     </div>
     {% if card_set.symbol_url %}
-    <img src="{{ card_set.symbol_url }}" alt="symbol" style="height:40px;object-fit:contain;opacity:0.7;">
+    <img src="{{ card_set.symbol_url }}" alt="symbol" style="height:40px;object-fit:contain;opacity:0.6;">
     {% endif %}
   </div>
 
-{% include 'components/card_grid.html' with cards=page_obj %}
-{% include 'components/pagination.html' %}
-
-  <div style="text-align:center;padding:80px 0;">
-    <div style="font-size:48px;margin-bottom:16px;">🎴</div>
-    <p style="color:var(--text-muted);">No cards in this set yet.</p>
-  </div>
+  {% include 'components/card_grid.html' with cards=page_obj %}
+  {% include 'components/pagination.html' %}
 
 </div>
 {% endblock %}

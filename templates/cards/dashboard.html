@@ -9,95 +9,72 @@
     <p class="page-meta">Collection statistics and insights</p>
   </div>
 
-  <!-- KPI cards -->
-  <div class="dash-grid">
-    <div class="dash-card">
-      <div class="dash-card-icon">🃏</div>
-      <div class="dash-card-value">{{ total_cards|intcomma }}</div>
-      <div class="dash-card-label">Total Cards</div>
+  <!-- KPI Cards -->
+  <div class="row g-3 mb-5">
+    <div class="col-6 col-md-3">
+      <div class="dash-kpi">
+        <div class="dash-kpi-icon">🃏</div>
+        <div class="dash-kpi-value">{{ total_cards|intcomma }}</div>
+        <div class="dash-kpi-label">Total Cards</div>
+      </div>
     </div>
-    <div class="dash-card">
-      <div class="dash-card-icon">📦</div>
-      <div class="dash-card-value">{{ total_sets }}</div>
-      <div class="dash-card-label">Card Sets</div>
+    <div class="col-6 col-md-3">
+      <div class="dash-kpi">
+        <div class="dash-kpi-icon">📦</div>
+        <div class="dash-kpi-value">{{ total_sets }}</div>
+        <div class="dash-kpi-label">Card Sets</div>
+      </div>
     </div>
-    <div class="dash-card">
-      <div class="dash-card-icon">❤️</div>
-      <div class="dash-card-value">{{ avg_hp }}</div>
-      <div class="dash-card-label">Average HP</div>
+    <div class="col-6 col-md-3">
+      <div class="dash-kpi">
+        <div class="dash-kpi-icon">❤️</div>
+        <div class="dash-kpi-value">{{ avg_hp }}</div>
+        <div class="dash-kpi-label">Average HP</div>
+      </div>
     </div>
     {% if top_price %}
-    <div class="dash-card" style="border-color:rgba(255,203,5,0.2);">
-      <div class="dash-card-icon">💎</div>
-      <div class="dash-card-value">${{ top_price.tcg_market }}</div>
-      <div class="dash-card-label">
-        <a href="{{ top_price.card.get_absolute_url }}" style="color:var(--accent);">{{ top_price.card.name }}</a>
+    <div class="col-6 col-md-3">
+      <div class="dash-kpi" style="border-color:rgba(204,0,0,0.2);">
+        <div class="dash-kpi-icon">💎</div>
+        <div class="dash-kpi-value">${{ top_price.tcg_market }}</div>
+        <div class="dash-kpi-label">
+          <a href="{{ top_price.card.get_absolute_url }}" class="text-accent text-decoration-none">{{ top_price.card.name }}</a>
+        </div>
       </div>
     </div>
     {% endif %}
   </div>
 
-  <!-- Data Quality -->
-  <div class="info-section" style="margin-bottom:40px;">
-    <div class="info-section-title">🔍 Data Quality</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+  <div class="row g-4 mb-5">
 
-      <div style="background:var(--bg-surface);border-radius:var(--radius-md);padding:18px;text-align:center;border:1px solid var(--border);">
-        <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:{% if missing_hp > 0 %}#f97316{% else %}#22c55e{% endif %};">{{ missing_hp }}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;">Missing HP</div>
-      </div>
-
-      <div style="background:var(--bg-surface);border-radius:var(--radius-md);padding:18px;text-align:center;border:1px solid var(--border);">
-        <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:{% if missing_rarity > 0 %}#f97316{% else %}#22c55e{% endif %};">{{ missing_rarity }}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;">Missing Rarity</div>
-      </div>
-
-      <div style="background:var(--bg-surface);border-radius:var(--radius-md);padding:18px;text-align:center;border:1px solid var(--border);">
-        <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:{% if missing_price > 0 %}#f97316{% else %}#22c55e{% endif %};">{{ missing_price }}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;">No Price Data</div>
-      </div>
-
-      <div style="background:var(--bg-surface);border-radius:var(--radius-md);padding:18px;text-align:center;border:1px solid var(--border);">
-        <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:{% if empty_sets > 0 %}#f97316{% else %}#22c55e{% endif %};">{{ empty_sets }}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;">Empty Sets</div>
-      </div>
-
-    </div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px;">
-
-    <!-- Cards by type -->
-    <div class="info-section">
-      <div class="info-section-title">🔥 Cards by Type</div>
-      {% if by_type %}
-      {% with max_cnt=by_type.0.cnt %}
-      <div class="chart-bar-wrap">
+    <!-- Cards by Type -->
+    <div class="col-md-6">
+      <div class="info-panel h-100">
+        <div class="info-panel-title">🔥 Cards by Type</div>
+        {% if by_type %}
+        {% with max_cnt=by_type.0.cnt %}
         {% for t in by_type %}
         <div class="chart-row">
           <div class="chart-label" style="color:{{ t.color }};">{{ t.name }}</div>
           <div class="chart-bar-bg">
-            <div class="chart-bar-fill"
-                 data-width="{% widthratio t.cnt max_cnt 100 %}"
-                 style="background:{{ t.color }};">
-            </div>
+            <div class="chart-bar-fill" data-width="{% widthratio t.cnt max_cnt 100 %}" style="background:{{ t.color }};"></div>
           </div>
           <div class="chart-count">{{ t.cnt }}</div>
         </div>
         {% endfor %}
+        {% endwith %}
+        {% else %}
+        <p class="text-muted">No data yet.</p>
+        {% endif %}
       </div>
-      {% endwith %}
-      {% else %}
-      <p style="color:var(--text-muted);font-size:14px;">No data yet.</p>
-      {% endif %}
     </div>
 
-    <!-- Cards by rarity -->
-    <div class="info-section">
-      <div class="info-section-title">✨ Cards by Rarity</div>
-      {% if by_rarity %}
-      {% with max_cnt=by_rarity.0.cnt %}
-      <div class="chart-bar-wrap">
+    <!-- Cards by Rarity -->
+    <div class="col-md-6">
+      <div class="info-panel h-100">
+        <div class="info-panel-title">✨ Cards by Rarity</div>
+        {% if by_rarity %}
+        {% with max_cnt=by_rarity.0.cnt %}
         {% for r in by_rarity %}
         <div class="chart-row">
           <div class="chart-label">{{ r.rarity|default:"Unknown"|truncatechars:12 }}</div>
@@ -107,66 +84,70 @@
           <div class="chart-count">{{ r.cnt }}</div>
         </div>
         {% endfor %}
+        {% endwith %}
+        {% else %}
+        <p class="text-muted">No data yet.</p>
+        {% endif %}
       </div>
-      {% endwith %}
-      {% else %}
-      <p style="color:var(--text-muted);font-size:14px;">No data yet.</p>
-      {% endif %}
     </div>
 
   </div>
 
-  <!-- Most expensive -->
+  <!-- Most Valuable Cards -->
   {% if expensive %}
-  <div class="info-section" style="margin-bottom:40px;">
-    <div class="info-section-title">💰 Most Valuable Cards</div>
+  <div class="info-panel mb-5">
+    <div class="info-panel-title">💰 Most Valuable Cards</div>
     {% for p in expensive %}
     <div class="info-row">
-      <div style="font-family:var(--font-display);font-size:16px;color:var(--text-muted);width:28px;flex-shrink:0;">{{ forloop.counter }}</div>
-      <div style="flex:1;">
-        <a href="{{ p.card.get_absolute_url }}" style="font-weight:600;font-size:14px;">{{ p.card.name }}</a>
-        {% if p.card.card_set %}<div style="font-size:12px;color:var(--text-muted);">{{ p.card.card_set.name }}</div>{% endif %}
+      <div class="d-flex align-items-center gap-3">
+        <span class="font-display text-muted" style="width:24px;">{{ forloop.counter }}</span>
+        <div>
+          <a href="{{ p.card.get_absolute_url }}" class="fw-semibold text-decoration-none text-dark">{{ p.card.name }}</a>
+          {% if p.card.card_set %}<div class="text-muted small">{{ p.card.card_set.name }}</div>{% endif %}
+        </div>
       </div>
-      <div style="display:flex;gap:6px;">
-        {% for t in p.card.types.all %}
-        <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;font-size:11px;">{{ t.name }}</span>
-        {% endfor %}
+      <div class="d-flex align-items-center gap-3">
+        <div class="d-flex gap-1">
+          {% for t in p.card.types.all %}
+          <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;font-size:11px;">{{ t.name }}</span>
+          {% endfor %}
+        </div>
+        <span class="font-display fw-bold text-accent" style="font-size:18px;">${{ p.tcg_market }}</span>
       </div>
-      <div style="font-family:var(--font-display);font-size:18px;color:var(--accent);font-weight:700;flex-shrink:0;">${{ p.tcg_market }}</div>
     </div>
     {% endfor %}
   </div>
   {% endif %}
 
-  <!-- Rare cards -->
+  <!-- Rare Cards -->
   {% if rare_cards %}
   <div class="section-head">
     <h2 class="section-title">Rare Cards</h2>
     <a href="{% url 'cards:card_list' %}?rarity=Rare+Holo" class="section-link">View all →</a>
   </div>
-  <div class="card-grid" style="margin-bottom:40px;">
+  <div class="card-grid mb-5">
     {% for card in rare_cards %}
-    <a href="{{ card.get_absolute_url }}" class="pokemon-card" style="display:block;">
-      <div class="card-image">
+    <a href="{{ card.get_absolute_url }}" class="pokemon-card">
+      <div class="card-img">
         {% if card.image_small %}
         <img src="{{ card.image_small }}" alt="{{ card.name }}" loading="lazy">
         {% else %}
-        <div class="card-image-placeholder">🎴</div>
+        <div class="card-img-placeholder">🎴</div>
         {% endif %}
-        <div style="position:absolute;top:10px;right:10px;">
+        <div class="card-rarity-badge">
           <span class="rarity-badge">{{ card.rarity }}</span>
         </div>
       </div>
-      <div class="card-body">
+      <div class="card-info">
         <div class="card-types">
           {% for t in card.types.all %}
           <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;font-size:11px;">{{ t.name }}</span>
           {% endfor %}
         </div>
         <div class="card-name">{{ card.name }}</div>
-        <div class="card-meta">
+        <div class="card-meta-row">
           <span class="card-hp">{% if card.hp %}<strong>{{ card.hp }}</strong> HP{% endif %}</span>
-          {% if card.market_price %}<span class="card-price">${{ card.market_price }}</span>{% endif %}
+          {% if card.market_price %}<span class="card-price-tag">${{ card.market_price }}</span>{% endif %}
         </div>
       </div>
     </a>

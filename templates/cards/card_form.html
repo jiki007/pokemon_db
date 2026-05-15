@@ -2,122 +2,130 @@
 {% block title %}{{ action }} Card{% endblock %}
 
 {% block content %}
-<div class="container" style="padding:48px 0 80px;">
+<div class="container py-5">
 
-  <div class="breadcrumbs" style="margin-bottom:28px;">
-    <a href="{% url 'cards:home' %}">Home</a>
-    <span>›</span>
-    <a href="{% url 'cards:card_list' %}">Cards</a>
-    <span>›</span>
-    {% if card %}
-    <a href="{{ card.get_absolute_url }}">{{ card.name }}</a>
-    <span>›</span>
-    {% endif %}
-    <span>{{ action }}</span>
-  </div>
+  <!-- Breadcrumbs -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'cards:home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'cards:card_list' %}">Cards</a></li>
+      {% if card %}
+      <li class="breadcrumb-item"><a href="{{ card.get_absolute_url }}">{{ card.name }}</a></li>
+      {% endif %}
+      <li class="breadcrumb-item active">{{ action }}</li>
+    </ol>
+  </nav>
 
-  <div style="max-width:720px;background:var(--bg-surface);border:1px solid var(--border);border-radius:24px;padding:40px;box-shadow:var(--shadow-card);">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="form-panel">
+        <h1 class="form-panel-title">{{ action }} Card</h1>
 
-    <h1 style="font-family:var(--font-display);font-size:28px;font-weight:700;margin-bottom:32px;color:var(--text-primary);">{{ action }} Card</h1>
-
-    {% if error %}
-    <div style="background:rgba(204,0,0,0.08);border:1px solid rgba(204,0,0,0.2);color:var(--accent);padding:14px 18px;border-radius:12px;margin-bottom:24px;font-size:15px;">⚠️ {{ error }}</div>
-    {% endif %}
-
-    <form method="post" novalidate>
-      {% csrf_token %}
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">Card ID *</label>
-          <input type="text" name="card_id" value="{{ card.card_id|default:'' }}" {% if card %}readonly{% endif %}
-                 style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;{% if card %}opacity:0.6;{% endif %}">
+        {% if error %}
+        <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+          <i class="bi bi-exclamation-triangle"></i> {{ error }}
         </div>
-
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">Name *</label>
-          <input type="text" name="name" value="{{ card.name|default:'' }}"
-                 style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;">
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">Supertype</label>
-          <select name="supertype" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;">
-            <option value="Pokémon" {% if card.supertype == 'Pokémon' %}selected{% endif %}>Pokémon</option>
-            <option value="Trainer" {% if card.supertype == 'Trainer' %}selected{% endif %}>Trainer</option>
-            <option value="Energy"  {% if card.supertype == 'Energy' %}selected{% endif %}>Energy</option>
-          </select>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">HP</label>
-          <input type="number" name="hp" value="{{ card.hp|default:'' }}" min="0" max="999"
-                 style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;">
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">Rarity</label>
-          <select name="rarity" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;">
-            <option value="">— Select Rarity —</option>
-            {% for val, label in rarities %}
-            <option value="{{ val }}" {% if card.rarity == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">Set</label>
-          <select name="card_set" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;">
-            <option value="">— No Set —</option>
-            {% for s in sets %}
-            <option value="{{ s.set_id }}" {% if card.card_set.set_id == s.set_id %}selected{% endif %}>{{ s.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">Card Number</label>
-          <input type="text" name="card_number" value="{{ card.card_number|default:'' }}"
-                 style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;">
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">Artist</label>
-          <input type="text" name="artist" value="{{ card.artist|default:'' }}"
-                 style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;">
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">Image URL (Small)</label>
-          <input type="url" name="image_small" value="{{ card.image_small|default:'' }}"
-                 style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;">
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">Image URL (Large)</label>
-          <input type="url" name="image_large" value="{{ card.image_large|default:'' }}"
-                 style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;">
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1;">
-          <label style="font-size:13px;font-weight:600;color:var(--text-secondary);">Flavor Text</label>
-          <textarea name="flavor_text" rows="3"
-                    style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:11px 14px;border-radius:10px;font-size:15px;font-family:inherit;outline:none;resize:vertical;">{{ card.flavor_text|default:'' }}</textarea>
-        </div>
-
-      </div>
-
-      <div style="display:flex;gap:12px;margin-top:32px;">
-        <button type="submit" class="btn btn-primary btn-lg">{{ action }} Card</button>
-        {% if card %}
-        <a href="{{ card.get_absolute_url }}" class="btn btn-secondary btn-lg">Cancel</a>
-        {% else %}
-        <a href="{% url 'cards:card_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
         {% endif %}
-      </div>
 
-    </form>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Card ID *</label>
+              <input type="text" name="card_id" value="{{ card.card_id|default:'' }}"
+                     class="form-control" {% if card %}readonly{% endif %}
+                     placeholder="e.g. base1-4">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Name *</label>
+              <input type="text" name="name" value="{{ card.name|default:'' }}"
+                     class="form-control" placeholder="e.g. Charizard">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Supertype</label>
+              <select name="supertype" class="form-select">
+                <option value="Pokémon" {% if card.supertype == 'Pokémon' %}selected{% endif %}>Pokémon</option>
+                <option value="Trainer" {% if card.supertype == 'Trainer' %}selected{% endif %}>Trainer</option>
+                <option value="Energy"  {% if card.supertype == 'Energy'  %}selected{% endif %}>Energy</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">HP</label>
+              <input type="number" name="hp" value="{{ card.hp|default:'' }}"
+                     class="form-control" min="0" max="999" placeholder="e.g. 120">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Rarity</label>
+              <select name="rarity" class="form-select">
+                <option value="">— Select Rarity —</option>
+                {% for val, label in rarities %}
+                <option value="{{ val }}" {% if card.rarity == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Set</label>
+              <select name="card_set" class="form-select">
+                <option value="">— No Set —</option>
+                {% for s in sets %}
+                <option value="{{ s.set_id }}" {% if card.card_set.set_id == s.set_id %}selected{% endif %}>{{ s.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Card Number</label>
+              <input type="text" name="card_number" value="{{ card.card_number|default:'' }}"
+                     class="form-control" placeholder="e.g. 4">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Artist</label>
+              <input type="text" name="artist" value="{{ card.artist|default:'' }}"
+                     class="form-control" placeholder="e.g. Ken Sugimori">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Image URL (Small)</label>
+              <input type="url" name="image_small" value="{{ card.image_small|default:'' }}"
+                     class="form-control" placeholder="https://…">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Image URL (Large)</label>
+              <input type="url" name="image_large" value="{{ card.image_large|default:'' }}"
+                     class="form-control" placeholder="https://…">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Flavor Text</label>
+              <textarea name="flavor_text" rows="3" class="form-control"
+                        placeholder="Card flavor text…">{{ card.flavor_text|default:'' }}</textarea>
+            </div>
+
+          </div>
+
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn btn-primary btn-lg px-5">
+              <i class="bi bi-check-lg"></i> {{ action }} Card
+            </button>
+            {% if card %}
+            <a href="{{ card.get_absolute_url }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+            {% else %}
+            <a href="{% url 'cards:card_list' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+            {% endif %}
+          </div>
+
+        </form>
+      </div>
+    </div>
   </div>
+
 </div>
 {% endblock %}
