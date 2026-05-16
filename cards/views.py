@@ -473,65 +473,9 @@ def set_compare(request):
         'sel_b':  id_b or '',
     })
 
-def insights(request):
-    from django.db.models import Avg, Max, Min, Sum
-
-    #Average HP per tpye
-    hp_by_type = (
-        Type.objects.annotate(avg_hp=Avg('cards__hp'))
-        .filter(avg_hp__isnull=False)
-        .order_by('-avg_hp')
-    )
-
-    #Average market price per rarity
-    price_by_rarity = (
-        Price.objects.values('card__rarity')
-        .annotate(avg_price=Avg('tcg_market'), total=Count('id'))
-        .exclude(card__rarity='')
-        .filter(avg_price__isnull=False)
-        .order_by('-avg_price')
-    )
-
-    #Top 15 artists by card count
-    top_artists = (
-        Card.objects.exclude(artist='')
-        .values('artist')
-        .annotate(card_count=Count('id'))
-        .order_by('-card_count'[:15])
-    )
-
-    #Most represented types overall
-    type_distribution = (
-        Type.objects.annotate(card_count=Count('cards'))
-        .filter(card_count__gt=0)
-        .order_by('-card_count')
-    )
-
-    #Sets with the highest average card value
-    richest_sets = (
-        Price.objects.values('card__card_set__name')
-        .annotate(avg_price=Avg('tcg_market'), card_count=Count('id'))
-        .filter(avg_price__isnull=False, card_count__gte=10)
-        .order_by('-avg_price')[:10]
-    )
-
-    #Hp distributuin buckets
-    hp_buckets = {
-        '1-50':Card.objects.filter(hp__gte=1, hp__lte=50).count(),
-        '51-100':Card.objects.filter(hp__gte=51, hp__lte=100).count(),
-        '101-150':Card.objects.filter(hp__gte=101, hp__lte=150).count(),
-        '151-200':Card.objects.filter(hp__gte=151, hp__lte=200).count(),
-        '200+':Card.objects.filter(hp__gte=201).count(),
-    }
-
-    return render(request, 'cards/insights.html', {
-        'hp_by_type':hp_by_type,
-        'price_by_rarity':price_by_rarity,
-        'top_artists':top_artists,
-        'type_distribution':type_distribution,
-        'richest_sets':richest_sets,
-        'hp_buckets':hp_buckets,
-    })
+def battle_simulator(request):
+    cards = Card.objects.prefetch_related('attacks', 'types').all()
+    return render(request, 'cards/battle_simulator.html', {'cards': cards})
 
 @login_required
 def toggle_favorite(request, card_id):

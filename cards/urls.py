@@ -19,6 +19,6 @@ urlpatterns = [
     path('search/', views.search, name='search'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('sql-showcase/', views.sql_showcase, name='sql_showcase'),
-    path('insights/', views.insights, name='insights'),
+    path('battle/', views.battle_simulator, name='battle_simulator'),
     
 ]

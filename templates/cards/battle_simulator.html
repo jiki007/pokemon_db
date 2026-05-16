@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% block title %}Card Battle Simulator{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="page-header">
+    <h1 class="page-title">⚔️ Card Battle Simulator</h1>
+    <p class="page-meta">Pick two cards and simulate a battle</p>
+  </div>
+
+  <!-- Card Picker -->
+  <div class="filter-panel mb-5">
+    <div class="row g-4 align-items-end">
+      <div class="col-md-5">
+        <label class="filter-label">Card A</label>
+        <select id="card-a" class="form-select">
+          <option value="">— choose a card —</option>
+          {% for card in cards %}
+          <option value="{{ card.card_id }}"
+            data-name="{{ card.name }}"
+            data-hp="{{ card.hp|default:60 }}"
+            data-image="{{ card.image_small|default:'' }}"
+            data-attacks='[{% for atk in card.attacks.all %}{"name":"{{ atk.name|escapejs }}","damage":{{ atk.damage|default:10 }}}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+            {{ card.name }} {% if card.hp %}({{ card.hp }} HP){% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-auto text-center">
+        <span class="fw-bold fs-4 text-muted">VS</span>
+      </div>
+      <div class="col-md-5">
+        <label class="filter-label">Card B</label>
+        <select id="card-b" class="form-select">
+          <option value="">— choose a card —</option>
+          {% for card in cards %}
+          <option value="{{ card.card_id }}"
+            data-name="{{ card.name }}"
+            data-hp="{{ card.hp|default:60 }}"
+            data-image="{{ card.image_small|default:'' }}"
+            data-attacks='[{% for atk in card.attacks.all %}{"name":"{{ atk.name|escapejs }}","damage":{{ atk.damage|default:10 }}}{% if not forloop.last %},{% endif %}{% endfor %}]'>
+            {{ card.name }} {% if card.hp %}({{ card.hp }} HP){% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 text-center">
+        <button id="simulate-btn" class="btn btn-primary btn-lg px-5">
+          ⚔️ Simulate Battle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Battle Arena (hidden until battle starts) -->
+  <div id="battle-arena" class="d-none">
+
+    <!-- HP Bars -->
+    <div class="row g-4 mb-4">
+      <div class="col-md-5">
+        <div class="bg-white border rounded-4 shadow-sm p-4 text-center">
+          <img id="img-a" src="" alt="" style="height:120px;object-fit:contain;" class="mb-3">
+          <div id="name-a" class="font-display fw-bold fs-5 mb-2"></div>
+          <div class="text-muted small mb-1">HP</div>
+          <div class="progress mb-1" style="height:12px;border-radius:999px;">
+            <div id="bar-a" class="progress-bar bg-danger" style="width:100%;border-radius:999px;transition:width 0.4s;"></div>
+          </div>
+          <div id="hp-a" class="font-display fw-bold" style="color:var(--accent);"></div>
+        </div>
+      </div>
+      <div class="col-md-2 d-flex align-items-center justify-content-center">
+        <div style="font-size:48px;">⚔️</div>
+      </div>
+      <div class="col-md-5">
+        <div class="bg-white border rounded-4 shadow-sm p-4 text-center">
+          <img id="img-b" src="" alt="" style="height:120px;object-fit:contain;" class="mb-3">
+          <div id="name-b" class="font-display fw-bold fs-5 mb-2"></div>
+          <div class="text-muted small mb-1">HP</div>
+          <div class="progress mb-1" style="height:12px;border-radius:999px;">
+            <div id="bar-b" class="progress-bar bg-danger" style="width:100%;border-radius:999px;transition:width 0.4s;"></div>
+          </div>
+          <div id="hp-b" class="font-display fw-bold" style="color:var(--accent);"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Winner Banner -->
+    <div id="winner-banner" class="d-none text-center mb-4">
+      <div class="bg-white border rounded-4 shadow-sm p-4">
+        <div style="font-size:56px;" class="mb-2">🏆</div>
+        <div id="winner-text" class="font-display fw-bold" style="font-size:28px;color:var(--accent);"></div>
+        <button id="reset-btn" class="btn btn-outline-secondary mt-3">↩ Battle Again</button>
+      </div>
+    </div>
+
+    <!-- Battle Log -->
+    <div class="info-panel">
+      <div class="info-panel-title">📜 Battle Log</div>
+      <div id="battle-log" style="max-height:400px;overflow-y:auto;font-size:14px;line-height:1.8;">
+      </div>
+      <div class="text-center mt-3">
+        <button id="next-turn-btn" class="btn btn-primary px-4">Next Turn ▶</button>
+        <button id="auto-btn" class="btn btn-outline-secondary px-4 ms-2">Auto Play ⚡</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="text-center py-5">
+    <div style="font-size:64px;" class="mb-3">⚔️</div>
+    <p class="text-muted">Select two cards above to start the battle!</p>
+  </div>
+
+</div>
+
+<script>
+let cardA = null, cardB = null;
+let hpA = 0, hpB = 0, maxHpA = 0, maxHpB = 0;
+let turn = 0, battleOver = false, autoInterval = null;
+
+function parseDamage(dmgStr) {
+  if (!dmgStr) return 10;
+  const num = parseInt(String(dmgStr).replace(/\D/g, ''));
+  return isNaN(num) || num === 0 ? 10 : num;
+}
+
+function getCardData(select) {
+  const opt = select.options[select.selectedIndex];
+  if (!opt.value) return null;
+  let attacks = [];
+  try { attacks = JSON.parse(opt.dataset.attacks); } catch(e) {}
+  if (!attacks.length) attacks = [{ name: 'Tackle', damage: 10 }];
+  return {
+    name: opt.dataset.name,
+    hp: parseInt(opt.dataset.hp) || 60,
+    image: opt.dataset.image,
+    attacks: attacks
+  };
+}
+
+function logEntry(html) {
+  const log = document.getElementById('battle-log');
+  const div = document.createElement('div');
+  div.className = 'info-row';
+  div.innerHTML = html;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function updateBars() {
+  const pctA = Math.max(0, (hpA / maxHpA) * 100);
+  const pctB = Math.max(0, (hpB / maxHpB) * 100);
+  document.getElementById('bar-a').style.width = pctA + '%';
+  document.getElementById('bar-b').style.width = pctB + '%';
+  document.getElementById('hp-a').textContent = Math.max(0, hpA) + ' / ' + maxHpA + ' HP';
+  document.getElementById('hp-b').textContent = Math.max(0, hpB) + ' / ' + maxHpB + ' HP';
+}
+
+function doTurn() {
+  if (battleOver) return;
+  turn++;
+  const aAttacks = turn % 2 === 1;
+  const attacker = aAttacks ? cardA : cardB;
+  const defender = aAttacks ? cardB : cardA;
+  const atk = attacker.attacks[Math.floor(Math.random() * attacker.attacks.length)];
+  const dmg = parseDamage(atk.damage);
+
+  if (aAttacks) hpB -= dmg;
+  else hpA -= dmg;
+
+  updateBars();
+
+  const atkColor = aAttacks ? 'var(--accent)' : '#3b82f6';
+  logEntry(`
+    <span style="color:var(--text-muted);width:30px;display:inline-block;">T${turn}</span>
+    <span style="font-weight:600;color:${atkColor};">${attacker.name}</span>
+    used <em>${atk.name}</em> →
+    <span style="color:#ef4444;font-weight:600;">-${dmg} HP</span> to
+    <span style="font-weight:600;">${defender.name}</span>
+  `);
+
+  if (hpA <= 0 || hpB <= 0) {
+    battleOver = true;
+    if (autoInterval) { clearInterval(autoInterval); autoInterval = null; }
+    const winner = hpA <= 0 ? cardB.name : cardA.name;
+    document.getElementById('winner-text').textContent = winner + ' wins!';
+    document.getElementById('winner-banner').classList.remove('d-none');
+    document.getElementById('next-turn-btn').disabled = true;
+    document.getElementById('auto-btn').disabled = true;
+    logEntry(`<span style="font-weight:700;color:var(--accent);">🏆 ${winner} wins the battle!</span>`);
+  }
+}
+
+document.getElementById('simulate-btn').addEventListener('click', function() {
+  cardA = getCardData(document.getElementById('card-a'));
+  cardB = getCardData(document.getElementById('card-b'));
+
+  if (!cardA || !cardB) {
+    alert('Please select both cards!');
+    return;
+  }
+  if (cardA.name === cardB.name) {
+    alert('Please select two different cards!');
+    return;
+  }
+
+  // Reset state
+  hpA = cardA.hp; hpB = cardB.hp;
+  maxHpA = cardA.hp; maxHpB = cardB.hp;
+  turn = 0; battleOver = false;
+  if (autoInterval) { clearInterval(autoInterval); autoInterval = null; }
+
+  // Set up UI
+  document.getElementById('img-a').src = cardA.image;
+  document.getElementById('img-b').src = cardB.image;
+  document.getElementById('name-a').textContent = cardA.name;
+  document.getElementById('name-b').textContent = cardB.name;
+  document.getElementById('battle-log').innerHTML = '';
+  document.getElementById('winner-banner').classList.add('d-none');
+  document.getElementById('next-turn-btn').disabled = false;
+  document.getElementById('auto-btn').disabled = false;
+  document.getElementById('battle-arena').classList.remove('d-none');
+  document.getElementById('empty-state').classList.add('d-none');
+
+  updateBars();
+  logEntry(`<span style="font-weight:700;">⚔️ Battle begins! ${cardA.name} (${hpA} HP) vs ${cardB.name} (${hpB} HP)</span>`);
+});
+
+document.getElementById('next-turn-btn').addEventListener('click', doTurn);
+
+document.getElementById('auto-btn').addEventListener('click', function() {
+  if (autoInterval) {
+    clearInterval(autoInterval);
+    autoInterval = null;
+    this.textContent = 'Auto Play ⚡';
+  } else {
+    this.textContent = 'Stop ⏹';
+    autoInterval = setInterval(() => {
+      doTurn();
+      if (battleOver) {
+        clearInterval(autoInterval);
+        autoInterval = null;
+        document.getElementById('auto-btn').textContent = 'Auto Play ⚡';
+      }
+    }, 600);
+  }
+});
+
+document.getElementById('reset-btn').addEventListener('click', function() {
+  document.getElementById('battle-arena').classList.add('d-none');
+  document.getElementById('empty-state').classList.remove('d-none');
+  document.getElementById('card-a').value = '';
+  document.getElementById('card-b').value = '';
+});
+</script>
+
+{% endblock %}

@@ -23,7 +23,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navMenu">
-      <ul class="navbar-nav me-auto gap-1">
+      <ul class="navbar-nav me-auto gap-0">
         <li class="nav-item">
           <a class="nav-link {% if request.resolver_match.url_name == 'card_list' %}active{% endif %}" href="{% url 'cards:card_list' %}">Cards</a>
         </li>
@@ -34,29 +34,34 @@
           <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'cards:dashboard' %}">Dashboard</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {% if request.resolver_match.url_name == 'set_compare' %}active{% endif %}" href="{% url 'cards:set_compare' %}">Compare</a>
+          <a class="nav-link {% if request.resolver_match.url_name == 'battle_simulator' %}active{% endif %}" href="{% url 'cards:battle_simulator' %}">Battle</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {% if request.resolver_match.url_name == 'insights' %}active{% endif %}" href="{% url 'cards:insights' %}">Insights</a>
+          <a class="nav-link {% if request.resolver_match.url_name == 'set_compare' %}active{% endif %}" href="{% url 'cards:set_compare' %}">Compare</a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% if request.resolver_match.url_name == 'sql_showcase' %}active{% endif %}" href="{% url 'cards:sql_showcase' %}">SQL</a>
         </li>
-        {% if request.user.is_authenticated %}
-        <li class="nav-item">
-          <a class="nav-link {% if request.resolver_match.url_name == 'account' %}active{% endif %}" href="{% url 'cards:account' %}">Account</a>
-        </li>
-        {% else %}
-        <li class="nav-item">
-          <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'login' %}">Login</a>
-        </li>
-        {% endif %}
       </ul>
-      <div class="nav-search-wrap ms-2">
-        <i class="bi bi-search nav-search-icon"></i>
-        <input id="nav-search-input" type="text" class="form-control form-control-sm" placeholder="Search cards…" autocomplete="off">
-        <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
-      </div>
+
+      <!-- Right side -->
+      <ul class="navbar-nav gap-1 align-items-center">
+        <li class="nav-item">
+          <form class="d-flex" action="{% url 'cards:search' %}" method="get">
+            <div class="input-group input-group-sm">
+              <input type="text" name="q" class="form-control" placeholder="Search cards…" style="width:160px;">
+              <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+            </div>
+          </form>
+        </li>
+        <li class="nav-item">
+          {% if request.user.is_authenticated %}
+          <a class="nav-link {% if request.resolver_match.url_name == 'account' %}active{% endif %}" href="{% url 'cards:account' %}">Account</a>
+          {% else %}
+          <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'login' %}">Login</a>
+          {% endif %}
+        </li>
+      </ul>
     </div>
   </div>
 </nav>
