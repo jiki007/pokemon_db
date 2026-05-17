@@ -47,24 +47,22 @@
         {% endif %}
 
         <!-- Actions -->
+       {% if request.user.is_authenticated %}
         <div class="d-flex gap-2">
           <a href="{% url 'cards:card_edit' card.card_id %}" class="btn btn-outline-secondary flex-fill">
             <i class="bi bi-pencil"></i> Edit
           </a>
-          {% if request.user.is_authenticated %}
-          <button
-            id="fav-btn"
-            class="btn {% if is_favorite %}btn-danger{% else %}btn-outline-secondary{% endif %} flex-fill"
-            data-card-id="{{ card.card_id }}"
-          >
-            <i class="bi {% if is_favorite %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
-            {% if is_favorite %}Unfavourite{% else %}Favourite{% endif %}
+          <button id="fav-btn"
+                  onclick="toggleFav('{% url 'cards:toggle_favorite' card.card_id %}')"
+                  class="btn flex-fill {% if is_favorited %}btn-danger{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-heart{% if is_favorited %}-fill{% endif %}"></i>
+            <span id="fav-label">{% if is_favorited %}Unfavourite{% else %}Favourite{% endif %}</span>
           </button>
-          {% endif %}
           <a href="{% url 'cards:card_delete' card.card_id %}" class="btn btn-outline-danger">
             <i class="bi bi-trash"></i>
           </a>
         </div>
+    {% endif %}
 
       </div>
     </div>
@@ -83,13 +81,6 @@
           {% if card.supertype %}<span class="text-muted">{{ card.supertype }}</span>{% endif %}
           {% if card.card_set %}<a href="{{ card.card_set.get_absolute_url }}" class="text-accent fw-semibold">{{ card.card_set.name }}</a>{% endif %}
         </div>
-      </div>
-
-      <!-- Add Card button -->
-      <div class="mb-4">
-        <a href="{% url 'cards:card_create' %}" class="btn btn-primary">
-          <i class="bi bi-plus-lg"></i> Add Card
-        </a>
       </div>
 
       <!-- Prices -->
@@ -245,28 +236,31 @@
   {% endif %}
 
 </div>
-
 <script>
-const favBtn = document.getElementById('fav-btn');
-if (favBtn) {
-  favBtn.addEventListener('click', function() {
-    const cardId = this.dataset.cardId;
-    fetch(`/cards/${cardId}/favorite/`, {
-      method: 'POST',
-      headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.status === 'added') {
-        favBtn.classList.replace('btn-outline-secondary', 'btn-danger');
-        favBtn.innerHTML = '<i class="bi bi-heart-fill"></i> Unfavourite';
-      } else {
-        favBtn.classList.replace('btn-danger', 'btn-outline-secondary');
-        favBtn.innerHTML = '<i class="bi bi-heart"></i> Favourite';
-      }
-    });
+function toggleFav(url) {
+  fetch(url, {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'},
+  })
+  .then(r => r.json())
+  .then(data => {
+    const btn = document.getElementById('fav-btn');
+    const label = document.getElementById('fav-label');
+    const icon = btn.querySelector('i');
+    if (data.status === 'added') {
+      btn.classList.remove('btn-outline-secondary');
+      btn.classList.add('btn-danger');
+      icon.classList.remove('bi-heart');
+      icon.classList.add('bi-heart-fill');
+      label.textContent = 'Unfavourite';
+    } else {
+      btn.classList.remove('btn-danger');
+      btn.classList.add('btn-outline-secondary');
+      icon.classList.remove('bi-heart-fill');
+      icon.classList.add('bi-heart');
+      label.textContent = 'Favourite';
+    }
   });
 }
 </script>
-
 {% endblock %}

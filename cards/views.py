@@ -326,83 +326,235 @@ def card_delete(request, card_id):
     return render(request, 'cards/card_confirm_delete.html', {'card': card})
 
 def sql_showcase(request):
-    from django.db.models import Avg, Count, Max, Min, Sum
+    from django.db.models import Avg, Count, Max, Min
+    from django.db import connection
 
-    # 1. JOIN — Cards with their set and type (multi-table join)
-    join_example = (
+    queries = []
+
+    # ── 1. MULTI-TABLE JOIN ───────────────────────────────────────
+    q1 = (
         Card.objects.select_related('card_set')
         .prefetch_related('types')
         .filter(hp__isnull=False)
         .order_by('-hp')[:8]
     )
+    queries.append({
+        'number':  1,
+        'title':   'Multi-Table JOIN — Top HP Cards',
+        'description': 'Joins Card, CardSet and Type tables to retrieve the highest HP cards with their set and type information.',
+        'orm': (
+            "Card.objects.select_related('card_set')\n"
+            "    .prefetch_related('types')\n"
+            "    .filter(hp__isnull=False)\n"
+            "    .order_by('-hp')[:8]"
+        ),
+        'sql': format_sql(str(
+            Card.objects.select_related('card_set')
+            .filter(hp__isnull=False)
+            .order_by('-hp')[:8]
+            .query
+        )),
+        'headers': ['Name', 'Set', 'Type', 'HP', 'Rarity'],
+        'rows': [
+            [c.name, c.card_set.name if c.card_set else '—',
+             ', '.join(t.name for t in c.types.all()),
+             c.hp, c.rarity or '—']
+            for c in q1
+        ],
+    })
 
-    # 2. GROUP BY + AVG — Average HP per type
-    avg_hp_by_type = (
+    # ── 2. GROUP BY + AVG ─────────────────────────────────────────
+    q2 = (
         Type.objects.annotate(avg_hp=Avg('cards__hp'))
         .filter(avg_hp__isnull=False)
         .order_by('-avg_hp')
     )
+    queries.append({
+        'number':  2,
+        'title':   'GROUP BY + AVG — Average HP per Type',
+        'description': 'Groups cards by energy type and computes the average HP for each group.',
+        'orm': (
+            "Type.objects.annotate(avg_hp=Avg('cards__hp'))\n"
+            "    .filter(avg_hp__isnull=False)\n"
+            "    .order_by('-avg_hp')"
+        ),
+        'sql': format_sql(str(q2.query)),
+        'headers': ['Type', 'Average HP'],
+        'rows': [[t.name, f"{t.avg_hp:.1f}"] for t in q2],
+    })
 
-    # 3. GROUP BY + COUNT — Card count per rarity
-    count_by_rarity = (
+    # ── 3. GROUP BY + COUNT ───────────────────────────────────────
+    q3 = (
         Card.objects.values('rarity')
         .annotate(total=Count('id'))
         .exclude(rarity='')
         .order_by('-total')
     )
+    queries.append({
+        'number':  3,
+        'title':   'GROUP BY + COUNT — Cards per Rarity',
+        'description': 'Counts how many cards exist for each rarity level, ordered from most to least common.',
+        'orm': (
+            "Card.objects.values('rarity')\n"
+            "    .annotate(total=Count('id'))\n"
+            "    .exclude(rarity='')\n"
+            "    .order_by('-total')"
+        ),
+        'sql': format_sql(str(q3.query)),
+        'headers': ['Rarity', 'Card Count'],
+        'rows': [[r['rarity'], r['total']] for r in q3],
+    })
 
-    # 4. GROUP BY + AVG price — Average market price per rarity
-    avg_price_by_rarity = (
+    # ── 4. JOIN + AVG PRICE ───────────────────────────────────────
+    q4 = (
         Price.objects.values('card__rarity')
         .annotate(avg_price=Avg('tcg_market'))
         .filter(avg_price__isnull=False)
         .exclude(card__rarity='')
         .order_by('-avg_price')
     )
+    queries.append({
+        'number':  4,
+        'title':   'JOIN + GROUP BY + AVG — Avg Market Price per Rarity',
+        'description': 'Joins the Price and Card tables, then groups by rarity to compute average market price.',
+        'orm': (
+            "Price.objects.values('card__rarity')\n"
+            "    .annotate(avg_price=Avg('tcg_market'))\n"
+            "    .filter(avg_price__isnull=False)\n"
+            "    .exclude(card__rarity='')\n"
+            "    .order_by('-avg_price')"
+        ),
+        'sql': format_sql(str(q4.query)),
+        'headers': ['Rarity', 'Avg Market Price'],
+        'rows': [[r['card__rarity'], f"${r['avg_price']:.2f}"] for r in q4],
+    })
 
-    # 5. AGGREGATE — Top artists by number of cards
-    top_artists = (
+    # ── 5. TOP ARTISTS ────────────────────────────────────────────
+    q5 = (
         Card.objects.exclude(artist='')
         .values('artist')
         .annotate(card_count=Count('id'))
         .order_by('-card_count')[:10]
     )
+    queries.append({
+        'number':  5,
+        'title':   'GROUP BY + ORDER — Top Artists by Card Count',
+        'description': 'Groups cards by artist name and ranks them by how many cards they have illustrated.',
+        'orm': (
+            "Card.objects.exclude(artist='')\n"
+            "    .values('artist')\n"
+            "    .annotate(card_count=Count('id'))\n"
+            "    .order_by('-card_count')[:10]"
+        ),
+        'sql': format_sql(str(q5.query)),
+        'headers': ['Artist', 'Cards Illustrated'],
+        'rows': [[r['artist'], r['card_count']] for r in q5],
+    })
 
-    # 6. FILTER + ORDER + LIMIT — Highest attack converted cost
-    heaviest_attacks = (
+    # ── 6. FILTER + ORDER + LIMIT ─────────────────────────────────
+    q6 = (
         Attack.objects.select_related('card')
         .filter(converted_cost__gt=0)
         .order_by('-converted_cost')[:8]
     )
+    queries.append({
+        'number':  6,
+        'title':   'FILTER + ORDER + LIMIT — Highest Energy Cost Attacks',
+        'description': 'Filters attacks with energy cost greater than zero, orders by cost descending, and limits to 8 results.',
+        'orm': (
+            "Attack.objects.select_related('card')\n"
+            "    .filter(converted_cost__gt=0)\n"
+            "    .order_by('-converted_cost')[:8]"
+        ),
+        'sql': format_sql(str(
+            Attack.objects.select_related('card')
+            .filter(converted_cost__gt=0)
+            .order_by('-converted_cost')[:8]
+            .query
+        )),
+        'headers': ['Attack', 'Card', 'Energy Cost', 'Damage'],
+        'rows': [
+            [a.name, a.card.name, a.converted_cost, a.damage or '—']
+            for a in q6
+        ],
+    })
 
-    # 7. NULL CHECK — Data completeness summary
-    completeness = {
-        'total':           Card.objects.count(),
-        'has_hp':          Card.objects.filter(hp__isnull=False).count(),
-        'has_rarity':      Card.objects.exclude(rarity='').count(),
-        'has_price':       Price.objects.count(),
-        'has_image':       Card.objects.exclude(image_small='').count(),
-    }
+    # ── 7. NULL CHECK — DATA COMPLETENESS ─────────────────────────
+    total = Card.objects.count()
+    completeness_data = [
+        ['Total Cards',       total,                                          '100%'],
+        ['Has HP',            Card.objects.filter(hp__isnull=False).count(),  f"{Card.objects.filter(hp__isnull=False).count()/total*100:.1f}%" if total else '0%'],
+        ['Has Rarity',        Card.objects.exclude(rarity='').count(),         f"{Card.objects.exclude(rarity='').count()/total*100:.1f}%" if total else '0%'],
+        ['Has Price',         Price.objects.count(),                           f"{Price.objects.count()/total*100:.1f}%" if total else '0%'],
+        ['Has Image',         Card.objects.exclude(image_small='').count(),    f"{Card.objects.exclude(image_small='').count()/total*100:.1f}%" if total else '0%'],
+        ['Has Artist',        Card.objects.exclude(artist='').count(),         f"{Card.objects.exclude(artist='').count()/total*100:.1f}%" if total else '0%'],
+    ]
+    queries.append({
+        'number':  7,
+        'title':   'NULL CHECK — Data Completeness Report',
+        'description': 'Checks how complete the dataset is by counting non-null and non-empty values for key fields.',
+        'orm': (
+            "Card.objects.filter(hp__isnull=False).count()\n"
+            "Card.objects.exclude(rarity='').count()\n"
+            "Price.objects.count()\n"
+            "Card.objects.exclude(image_small='').count()"
+        ),
+        'sql': (
+            "SELECT COUNT(*) FROM cards_card\n  WHERE hp IS NOT NULL;\n\n"
+            "SELECT COUNT(*) FROM cards_card\n  WHERE rarity != '';\n\n"
+            "SELECT COUNT(*) FROM cards_price;\n\n"
+            "SELECT COUNT(*) FROM cards_card\n  WHERE image_small != '';"
+        ),
+        'headers': ['Field', 'Count', 'Coverage'],
+        'rows': completeness_data,
+    })
 
-    # 8. MULTI-JOIN — Types with weakness/resistance stats
-    type_battle_stats = (
+    # ── 8. MULTI-JOIN + COUNT ─────────────────────────────────────────
+    q8 = (
         Type.objects.annotate(
-            as_weakness=Count('weakness'),
-            as_resistance=Count('resistance'),
-            card_count=Count('cards'),
+            card_count=Count('cards', distinct=True),
+            as_weakness=Count('weakness', distinct=True),
+            as_resistance=Count('resistance', distinct=True),
         ).order_by('-card_count')
     )
+    queries.append({
+        'number':  8,
+        'title':   'MULTI-JOIN + COUNT — Type Battle Statistics',
+        'description': 'Joins Type, Weakness, Resistance and Card tables simultaneously to compute battle statistics per type.',
+        'orm': (
+            "Type.objects.annotate(\n"
+            "    card_count=Count('cards', distinct=True),\n"
+            "    as_weakness=Count('weakness', distinct=True),\n"
+            "    as_resistance=Count('resistance', distinct=True),\n"
+            ").order_by('-card_count')"
+        ),
+        'sql': format_sql(str(q8.query)),
+        'headers': ['Type', 'Cards', 'Times as Weakness', 'Times as Resistance'],
+        'rows': [
+            [t.name, t.card_count, t.as_weakness, t.as_resistance]
+            for t in q8
+        ],
+    })
 
     return render(request, 'cards/sql_showcase.html', {
-        'join_example':        join_example,
-        'avg_hp_by_type':      avg_hp_by_type,
-        'count_by_rarity':     count_by_rarity,
-        'avg_price_by_rarity': avg_price_by_rarity,
-        'top_artists':         top_artists,
-        'heaviest_attacks':    heaviest_attacks,
-        'completeness':        completeness,
-        'type_battle_stats':   type_battle_stats,
+        'queries': queries,
     })
+
+def format_sql(sql):
+    # Shorten the SELECT clause — only keep first 60 chars of it
+    if 'FROM' in sql:
+        select_part = sql[:sql.index('FROM')]
+        rest_part   = sql[sql.index('FROM'):]
+        if len(select_part) > 60:
+            select_part = select_part[:60] + '...'
+        sql = select_part + rest_part
+
+    keywords = ['FROM', 'LEFT OUTER JOIN', 'LEFT JOIN',
+                'INNER JOIN', 'WHERE', 'GROUP BY',
+                'ORDER BY', 'HAVING', 'LIMIT', 'OFFSET']
+    for kw in keywords:
+        sql = sql.replace(kw, f'\n{kw}')
+    return sql.strip()
 
 def signup(request):
     if request.user.is_authenticated:

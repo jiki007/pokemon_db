@@ -1,179 +1,211 @@
 {% extends 'base.html' %}
 {% block title %}SQL Showcase{% endblock %}
 
+{% block extra_head %}
+<style>
+/* Query card */
+.query-card {
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 48px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.07);
+}
+
+/* Header */
+.query-header {
+  background: linear-gradient(135deg, #cc0000 0%, #7a0000 100%);
+  padding: 28px 32px;
+}
+.query-badge {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: 2px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 700;
+  color: #fff; flex-shrink: 0;
+}
+
+/* Code panels */
+.code-label {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 10px 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.code-label.orm { background: #21262d; color: #79c0ff; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.code-label.sql { background: #0d1117; color: #58a6ff; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+pre.orm-code {
+  background: #21262d; color: #cdd9e5;
+  margin: 0; padding: 20px 24px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px; line-height: 1.9;
+  white-space: pre-wrap; word-break: break-word;
+  flex: 1;
+  height: 100%;
+}
+pre.sql-code {
+  background: #0d1117; color: #58a6ff;
+  margin: 0; padding: 20px 24px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px; line-height: 1.9;
+  white-space: pre-wrap; word-break: break-word;
+  flex: 1;
+  height: 100%;
+}
+
+/* Results table */
+.results-table thead th {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.06em; color: #999;
+  background: #f8f9fa; font-weight: 700;
+  padding: 12px 24px; border-bottom: 2px solid #eee;
+}
+.results-table tbody td {
+  padding: 12px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px; color: #1a1a2e;
+}
+.results-table tbody td:first-child { font-weight: 600; color: #cc0000; }
+.results-table tbody tr:last-child td { border-bottom: none; }
+.results-table tbody tr:hover { background: #fff9f9; }
+
+/* Jump chips */
+.jump-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 999px;
+  background: #fff; border: 1px solid rgba(0,0,0,0.1);
+  font-size: 13px; font-weight: 500; color: #555;
+  text-decoration: none; transition: 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.jump-chip:hover { background: #cc0000; color: #fff; border-color: #cc0000; box-shadow: 0 4px 12px rgba(204,0,0,0.2); }
+.chip-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #cc0000; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.jump-chip:hover .chip-num { background: rgba(255,255,255,0.25); }
+
+/* Row badge */
+.rows-badge {
+  background: #fff5f5; color: #cc0000;
+  border: 1px solid rgba(204,0,0,0.2);
+  padding: 4px 14px; border-radius: 999px;
+  font-size: 12px; font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .code-section { flex-direction: column !important; }
+  .code-panel-left { border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.1); }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
+<div class="container py-5">
 
   <div class="page-header">
     <h1 class="page-title">SQL Showcase</h1>
-    <p class="page-meta">Live database queries demonstrating joins, aggregations, grouping, filtering, and null checks</p>
+    <p class="page-meta">{{ queries|length }} live queries running against PostgreSQL</p>
   </div>
 
-  <!-- Query 1: JOIN -->
-  <div class="info-panel mb-4">
-    <div class="info-panel-title">① JOIN — Top HP Cards with Set & Type</div>
-    <p class="text-muted small mb-3">
-      Multi-table join across <code>Card</code> → <code>Cardset</code> → <code>CardType</code> → <code>Type</code>, ordered by HP descending.
-    </p>
+  <!-- Intro -->
+  <div class="row g-3 mb-5">
+    <div class="col-md-4">
+      <div class="rounded-4 p-4 h-100" style="background:#21262d;">
+        <div class="mb-3" style="font-size:32px;">🐍</div>
+        <div class="fw-bold mb-2" style="color:#79c0ff;font-size:15px;">Django ORM</div>
+        <div style="color:#8b949e;font-size:13px;line-height:1.7;">Python code that describes database queries in an object-oriented way — no raw SQL needed.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="rounded-4 p-4 h-100" style="background:#0d1117;">
+        <div class="mb-3" style="font-size:32px;">🗄️</div>
+        <div class="fw-bold mb-2" style="color:#58a6ff;font-size:15px;">Generated SQL</div>
+        <div style="color:#8b949e;font-size:13px;line-height:1.7;">The actual SQL statement Django auto-generates and sends directly to PostgreSQL.</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="rounded-4 p-4 h-100" style="background:#fff8f8;border:1px solid rgba(204,0,0,0.12);">
+        <div class="mb-3" style="font-size:32px;">📊</div>
+        <div class="fw-bold mb-2" style="color:#cc0000;font-size:15px;">Live Results</div>
+        <div class="text-muted" style="font-size:13px;line-height:1.7;">Real data returned from the PostgreSQL database — updated every page load.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick jump -->
+  <div class="d-flex gap-2 flex-wrap mb-5">
+    {% for q in queries %}
+    <a href="#query-{{ q.number }}" class="jump-chip">
+      <span class="chip-num">{{ q.number }}</span>
+      {{ q.title|truncatechars:26 }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Queries -->
+  {% for q in queries %}
+  <div class="query-card" id="query-{{ q.number }}">
+
+    <!-- Header -->
+    <div class="query-header d-flex align-items-center gap-3">
+      <div class="query-badge">{{ q.number }}</div>
+      <div>
+        <div class="fw-bold text-white mb-1" style="font-family:var(--font-display);font-size:18px;">{{ q.title }}</div>
+        <div style="color:rgba(255,255,255,0.75);font-size:13px;line-height:1.5;">{{ q.description }}</div>
+      </div>
+    </div>
+  <!-- Code panels -->
+  <div class="d-flex align-items-stretch" style="border-bottom:1px solid rgba(0,0,0,0.07);">
+    <div class="d-flex flex-column code-panel-left" style="border-right:1px solid rgba(255,255,255,0.06);width:50%;">
+      <div class="code-label orm">🐍 Django ORM (Python)</div>
+      <pre class="orm-code">{{ q.orm }}</pre>
+    </div>
+    <div class="d-flex flex-column" style="width:50%;">
+      <div class="code-label sql">🗄️ Generated SQL (PostgreSQL)</div>
+      <pre class="sql-code">{{ q.sql }}</pre>
+    </div>
+  </div>
+
+    <!-- Results -->
+    <div class="d-flex justify-content-between align-items-center px-4 py-3" style="border-bottom:1px solid #f0f0f0;background:#fafafa;">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;">📊 Query Results</span>
+      <span class="rows-badge">{{ q.rows|length }} rows returned</span>
+    </div>
+
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
+      <table class="table table-hover results-table mb-0">
+        <thead>
           <tr>
-            <th class="text-muted small text-uppercase" style="letter-spacing:.06em;">Card</th>
-            <th class="text-muted small text-uppercase" style="letter-spacing:.06em;">Set</th>
-            <th class="text-muted small text-uppercase" style="letter-spacing:.06em;">Types</th>
-            <th class="text-muted small text-uppercase text-end" style="letter-spacing:.06em;">HP</th>
+            {% for h in q.headers %}
+            <th>{{ h }}</th>
+            {% endfor %}
           </tr>
         </thead>
         <tbody>
-          {% for card in join_example %}
+          {% for row in q.rows %}
           <tr>
-            <td class="fw-semibold">
-              <a href="{{ card.get_absolute_url }}" style="color:var(--accent);">{{ card.name }}</a>
-            </td>
-            <td class="text-secondary">{{ card.card_set.name|default:"—" }}</td>
-            <td>
-              {% for t in card.types.all %}
-              <span class="type-badge" style="background:{{ t.color }}18;color:{{ t.color }};border:1px solid {{ t.color }}35;font-size:11px;">{{ t.name }}</span>
-              {% endfor %}
-            </td>
-            <td class="text-end font-display fw-bold" style="color:var(--accent);">{{ card.hp }}</td>
+            {% for cell in row %}
+            <td>{{ cell }}</td>
+            {% endfor %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{{ q.headers|length }}" class="text-center text-muted py-5">No data available</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-  </div>
 
-  <!-- Queries 2 & 3 -->
-  <div class="row g-4 mb-4">
-    <div class="col-md-6">
-      <div class="info-panel h-100">
-        <div class="info-panel-title">② GROUP BY + AVG — Average HP per Type</div>
-        <p class="text-muted small mb-3">Aggregates HP across the <code>CardType</code> join table, grouped by type.</p>
-        {% for t in avg_hp_by_type %}
-        <div class="info-row">
-          <span class="fw-semibold" style="color:{{ t.color }};">{{ t.icon }} {{ t.name }}</span>
-          <span class="font-display fw-bold" style="color:var(--accent);">{{ t.avg_hp|floatformat:1 }} HP</span>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="info-panel h-100">
-        <div class="info-panel-title">③ GROUP BY + COUNT — Cards per Rarity</div>
-        <p class="text-muted small mb-3">Groups all cards by rarity field, counts rows per group.</p>
-        {% for r in count_by_rarity %}
-        <div class="info-row">
-          <span class="text-secondary">{{ r.rarity }}</span>
-          <span class="font-display fw-bold">{{ r.total }}</span>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
   </div>
-
-  <!-- Queries 4 & 5 -->
-  <div class="row g-4 mb-4">
-    <div class="col-md-6">
-      <div class="info-panel h-100">
-        <div class="info-panel-title">④ JOIN + GROUP BY + AVG — Avg Price per Rarity</div>
-        <p class="text-muted small mb-3">Joins <code>Price</code> → <code>Card</code>, groups by rarity, averages market price.</p>
-        {% for r in avg_price_by_rarity %}
-        <div class="info-row">
-          <span class="text-secondary">{{ r.card__rarity }}</span>
-          <span class="font-display fw-bold" style="color:var(--accent);">${{ r.avg_price|floatformat:2 }}</span>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="info-panel h-100">
-        <div class="info-panel-title">⑤ GROUP BY + ORDER — Top Artists by Card Count</div>
-        <p class="text-muted small mb-3">Groups cards by artist name, counts and ranks descending.</p>
-        {% for a in top_artists %}
-        <div class="info-row">
-          <span class="text-secondary">{{ a.artist }}</span>
-          <span class="font-display fw-bold">{{ a.card_count }}</span>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-
-  <!-- Query 6: Heaviest attacks -->
-  <div class="info-panel mb-4">
-    <div class="info-panel-title">⑥ FILTER + ORDER + LIMIT — Highest Energy Cost Attacks</div>
-    <p class="text-muted small mb-3">
-      Filters attacks where <code>converted_cost > 0</code>, joins to card, orders by cost descending, limits to 8.
-    </p>
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th class="text-muted small text-uppercase" style="letter-spacing:.06em;">Attack</th>
-            <th class="text-muted small text-uppercase" style="letter-spacing:.06em;">Card</th>
-            <th class="text-muted small text-uppercase" style="letter-spacing:.06em;">Damage</th>
-            <th class="text-muted small text-uppercase text-end" style="letter-spacing:.06em;">Energy Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for atk in heaviest_attacks %}
-          <tr>
-            <td class="fw-semibold">{{ atk.name }}</td>
-            <td><a href="{{ atk.card.get_absolute_url }}" style="color:var(--accent);">{{ atk.card.name }}</a></td>
-            <td class="text-secondary">{{ atk.damage|default:"—" }}</td>
-            <td class="text-end font-display fw-bold" style="color:var(--accent-2);">{{ atk.converted_cost }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Queries 7 & 8 -->
-  <div class="row g-4 mb-5">
-    <div class="col-md-6">
-      <div class="info-panel h-100">
-        <div class="info-panel-title">⑦ NULL CHECK — Data Completeness</div>
-        <p class="text-muted small mb-3">Counts non-null values per field to measure data quality across {{ completeness.total }} cards.</p>
-        {% with t=completeness.total %}
-        <div class="info-row">
-          <span class="text-secondary">Has HP</span>
-          <span><strong>{{ completeness.has_hp }}</strong> <span class="text-muted small">({% widthratio completeness.has_hp t 100 %}%)</span></span>
-        </div>
-        <div class="info-row">
-          <span class="text-secondary">Has Rarity</span>
-          <span><strong>{{ completeness.has_rarity }}</strong> <span class="text-muted small">({% widthratio completeness.has_rarity t 100 %}%)</span></span>
-        </div>
-        <div class="info-row">
-          <span class="text-secondary">Has Price</span>
-          <span><strong>{{ completeness.has_price }}</strong> <span class="text-muted small">({% widthratio completeness.has_price t 100 %}%)</span></span>
-        </div>
-        <div class="info-row" style="border-bottom:none;">
-          <span class="text-secondary">Has Image</span>
-          <span><strong>{{ completeness.has_image }}</strong> <span class="text-muted small">({% widthratio completeness.has_image t 100 %}%)</span></span>
-        </div>
-        {% endwith %}
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="info-panel h-100">
-        <div class="info-panel-title">⑧ MULTI-JOIN + COUNT — Type Battle Statistics</div>
-        <p class="text-muted small mb-3">Joins <code>Type</code> → <code>Weakness</code> and <code>Resistance</code> simultaneously, counts each.</p>
-        {% for t in type_battle_stats %}
-        <div class="info-row">
-          <span class="fw-semibold" style="color:{{ t.color }};">{{ t.icon }} {{ t.name }}</span>
-          <span class="small text-muted">
-            <span title="weak against">⬇ {{ t.as_weakness }}</span>
-            &nbsp;
-            <span title="resists">⬆ {{ t.as_resistance }}</span>
-          </span>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
+  {% endfor %}
 
 </div>
 {% endblock %}
