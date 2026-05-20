@@ -496,21 +496,6 @@ pokemon_db/
     └── js/main.js                     # Vanilla JavaScript
 ```
 
----
-
-## Team
-
-| # | Name | Student ID |
-|---|------|------------|
-| 1 | Asralkhanov Zikrilloh Davronbek Ugli | 12245027 |
-| 2 | Ibragimov Asadbek | 12245008 |
-| 3 | Lifrov Vadim | 12240192 |
-| 4 | Sara Beslic | 12260051 |
-| 5 | Murzabekov Alymbek | 12240190 |
-| 6 | Li Mikhail | 12236295 |
-
----
-
-**Course:** Database Design · ISE3235-001 · Inha University  
+**Course:** Database Design · ISE3235-001 · Inha University
 **Data Source:** [PokémonTCG API](https://api.pokemontcg.io/v2)  
 **Not affiliated with Nintendo or The Pokémon Company.**
